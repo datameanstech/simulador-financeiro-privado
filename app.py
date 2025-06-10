@@ -36,7 +36,7 @@ users_db = {
 class DataManager:
     def __init__(self):
         self.file_id = "1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E"
-        self.cache_file = "dados_litigantes.parquet"
+        self.cache_file = "grandes_litigantes_202504.parquet"
         self.df = None
     
     def download_data(self):
@@ -126,51 +126,71 @@ class DataManager:
         try:
             load_all = (limit == 0)
             
-            # Tentar carregar arquivo local primeiro
-            if os.path.exists(self.cache_file):
+            # Se usuário quer TODOS os registros, verificar se arquivo local é completo
+            if load_all and os.path.exists(self.cache_file):
+                print(f"📂 Verificando arquivo local: {self.cache_file}")
+                try:
+                    # Verificar tamanho do arquivo - arquivo real deve ter mais de 100MB
+                    file_size = os.path.getsize(self.cache_file) / (1024 * 1024)  # MB
+                    print(f"📊 Tamanho do arquivo: {file_size:.1f} MB")
+                    
+                    if file_size < 100:  # Arquivo muito pequeno, deve ser de teste
+                        print("⚠️ Arquivo local parece ser de teste (< 100MB)")
+                        print("🌐 Forçando download dos dados reais completos...")
+                        os.remove(self.cache_file)  # Remove arquivo de teste
+                    else:
+                        # Arquivo grande, carregar todos os registros
+                        df_lazy = pl.scan_parquet(self.cache_file)
+                        print("🔥 Carregando TODOS os registros do arquivo completo...")
+                        self.df = df_lazy.collect()
+                        print(f"✅ Dados COMPLETOS carregados: {len(self.df):,} registros")
+                        return self.df
+                except Exception as e:
+                    print(f"⚠️ Erro ao verificar arquivo local: {e}")
+                    if os.path.exists(self.cache_file):
+                        os.remove(self.cache_file)
+            
+            # Tentar carregar arquivo local (para quantidades limitadas)
+            elif os.path.exists(self.cache_file) and not load_all:
                 print(f"📂 Carregando arquivo local: {self.cache_file}")
                 try:
                     df_lazy = pl.scan_parquet(self.cache_file)
-                    
-                    if load_all:
-                        print("🔥 Carregando TODOS os registros...")
-                        self.df = df_lazy.collect()
-                    else:
-                        print(f"📊 Carregando {limit:,} registros...")
-                        self.df = df_lazy.head(limit).collect()
-                    
+                    print(f"📊 Carregando {limit:,} registros...")
+                    self.df = df_lazy.head(limit).collect()
                     print(f"✅ Dados carregados do arquivo local: {len(self.df):,} registros")
                     return self.df
                 except Exception as e:
                     print(f"⚠️ Arquivo local corrompido: {e}")
                     os.remove(self.cache_file)
             
-            # Se não existe arquivo local, tentar download
+            # Se não existe arquivo local ou foi removido, tentar download
             if load_all:
-                print("🌐 Tentando download COMPLETO do Google Drive (14M+ registros)...")
+                print("🌐 Iniciando download COMPLETO do Google Drive (14M+ registros)...")
+                print("⏳ ATENÇÃO: Este processo pode demorar alguns minutos!")
             else:
                 print(f"🌐 Tentando download do Google Drive ({limit:,} registros)...")
                 
             if not self.download_data():
                 print("⚠️ Download falhou, gerando dados de teste...")
-                return self._create_fallback_data(limit if not load_all else 10000)
+                return self._create_fallback_data(limit if not load_all else 50000)
             
             # Carregar dados baixados
             df_lazy = pl.scan_parquet(self.cache_file)
             
             if load_all:
-                print("🔥 Processando TODOS os registros (pode demorar)...")
+                print("🔥 Processando TODOS os registros (pode demorar alguns minutos)...")
                 self.df = df_lazy.collect()
+                print(f"🎉 SUCESSO! Carregados {len(self.df):,} registros COMPLETOS!")
             else:
                 self.df = df_lazy.head(limit).collect()
+                print(f"✅ Dados carregados: {len(self.df):,} registros")
             
-            print(f"✅ Dados carregados: {len(self.df):,} registros")
             return self.df
             
         except Exception as e:
             print(f"❌ Erro ao carregar: {e}")
             print("🔄 Tentando dados de fallback...")
-            return self._create_fallback_data(limit if not load_all else 10000)
+            return self._create_fallback_data(limit if not load_all else 50000)
     
     def _create_fallback_data(self, limit):
         """Criar dados de demonstração em caso de falha"""
@@ -385,6 +405,32 @@ def api_simulacao():
         return jsonify({'success': True, 'simulacao': resultado})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/force-download', methods=['POST'])
+@login_required
+def api_force_download():
+    """API para forçar download dos dados reais"""
+    try:
+        print("🔥 FORÇANDO download dos dados reais...")
+        
+        # Remover qualquer arquivo de cache existente
+        cache_files = ['grandes_litigantes_202504.parquet', 'dados_teste.parquet', 'dados_litigantes.parquet']
+        for cache_file in cache_files:
+            if os.path.exists(cache_file):
+                os.remove(cache_file)
+                print(f"🗑️ Removido: {cache_file}")
+        
+        print("✅ Cache limpo. Pronto para download dos dados reais.")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Cache limpo. Agora você pode carregar os dados reais.'
+        })
+        
+    except Exception as e:
+        error_msg = f'Erro ao limpar cache: {str(e)}'
+        print(f"❌ {error_msg}")
+        return jsonify({'error': error_msg}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 
