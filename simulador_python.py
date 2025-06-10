@@ -14,6 +14,9 @@ import pandas as pd
 from pathlib import Path
 import numpy as np
 from typing import Dict, List, Tuple, Optional
+import requests
+import io
+import tempfile
 
 # Configuração da página
 st.set_page_config(
@@ -69,6 +72,74 @@ def detectar_encoding(arquivo_path: str) -> str:
         
     except Exception:
         return 'utf-8'  # Fallback padrão
+
+@st.cache_data
+def carregar_dados_do_drive(drive_url: str, nome_arquivo: str) -> pl.DataFrame:
+    """Carrega dados diretamente do Google Drive"""
+    try:
+        st.info(f"📡 Baixando arquivo do Google Drive: {nome_arquivo}")
+        
+        # Fazer o download do arquivo
+        with st.spinner("⏳ Conectando ao Google Drive..."):
+            response = requests.get(drive_url, stream=True)
+            response.raise_for_status()
+        
+        # Verificar o tamanho do arquivo
+        content_length = response.headers.get('content-length')
+        if content_length:
+            size_mb = int(content_length) / (1024 * 1024)
+            st.info(f"📊 Tamanho do arquivo: {size_mb:.1f} MB")
+        
+        # Salvar temporariamente e carregar
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.parquet') as tmp_file:
+            st.info("💾 Salvando arquivo temporário...")
+            
+            # Baixar com barra de progresso
+            total_size = int(content_length) if content_length else 0
+            downloaded = 0
+            
+            if total_size > 0:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp_file.write(chunk)
+                        downloaded += len(chunk)
+                        progress = downloaded / total_size
+                        progress_bar.progress(progress)
+                        status_text.text(f"Baixado: {downloaded/(1024*1024):.1f}/{total_size/(1024*1024):.1f} MB")
+                
+                progress_bar.empty()
+                status_text.empty()
+            else:
+                # Sem informação de tamanho, baixar tudo
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp_file.write(chunk)
+            
+            tmp_file.flush()
+            
+            st.success("✅ Arquivo baixado com sucesso!")
+            
+            # Carregar usando a função existente
+            df = carregar_dados_grandes(tmp_file.name)
+            
+            # Limpar arquivo temporário
+            try:
+                Path(tmp_file.name).unlink()
+            except:
+                pass
+            
+            return df
+            
+    except requests.exceptions.RequestException as e:
+        st.error(f"❌ Erro ao baixar do Google Drive: {str(e)}")
+        st.info("💡 Verifique se o link do Google Drive está correto e o arquivo é público")
+        return pl.DataFrame()
+    except Exception as e:
+        st.error(f"❌ Erro inesperado: {str(e)}")
+        return pl.DataFrame()
 
 @st.cache_data
 def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
@@ -682,12 +753,23 @@ def main():
     # Upload ou caminho do arquivo
     arquivo_opcao = st.sidebar.radio(
         "Fonte de dados:",
-        ["Upload de arquivo", "Caminho local", "Dados simulados"]
+        ["🚀 Google Drive (Recomendado)", "📁 Upload de arquivo", "🔧 Caminho local", "🎭 Dados simulados"]
     )
     
     df = pl.DataFrame()
     
-    if arquivo_opcao == "Upload de arquivo":
+    if arquivo_opcao == "🚀 Google Drive (Recomendado)":
+        st.sidebar.info("📡 Carregando do arquivo padrão no Google Drive")
+        st.sidebar.markdown("**Arquivo:** `grandes_litigantes_202504.parquet`")
+        
+        if st.sidebar.button("🚀 Carregar dados do Drive", help="Carrega automaticamente do Google Drive"):
+            google_drive_url = "https://drive.google.com/file/d/1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E/view?usp=drive_link"
+            # Converter para download direto
+            file_id = "1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E"
+            download_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+            df = carregar_dados_do_drive(download_url, "grandes_litigantes_202504.parquet")
+    
+    elif arquivo_opcao == "📁 Upload de arquivo":
         uploaded_file = st.sidebar.file_uploader(
             "Escolha o arquivo (3GB+)",
             type=['csv', 'parquet'],
@@ -696,8 +778,10 @@ def main():
         if uploaded_file:
             df = carregar_dados_grandes(uploaded_file)
             
-    elif arquivo_opcao == "Caminho local":
-        # Verificar se há arquivo local na pasta do deploy
+    elif arquivo_opcao == "🔧 Caminho local":
+        st.sidebar.info("🗂️ Opções avançadas para arquivos locais")
+        
+        # OPÇÃO 1: Verificar se há arquivo local na pasta do deploy
         arquivos_locais = [
             "grandes_litigantes_202504.parquet",
             "grandes_litigantes_por_orgao 202504.parquet", 
@@ -712,20 +796,23 @@ def main():
                 break
         
         if arquivo_encontrado:
-            st.sidebar.success(f"📁 Arquivo encontrado: {arquivo_encontrado}")
-            if st.sidebar.button("🚀 Carregar dados locais"):
+            st.sidebar.success(f"📁 Arquivo local encontrado: {arquivo_encontrado}")
+            if st.sidebar.button("🗂️ Carregar arquivo local"):
                 df = carregar_dados_grandes(arquivo_encontrado)
         else:
-            caminho = st.sidebar.text_input(
-                "Caminho do arquivo:",
-                value="grandes_litigantes_202504.parquet"
-            )
-            if caminho and Path(caminho).exists():
-                df = carregar_dados_grandes(caminho)
-            elif caminho:
-                st.sidebar.error("Arquivo não encontrado")
+            # OPÇÃO 2: Caminho manual
+            with st.sidebar.expander("📝 Caminho personalizado"):
+                caminho = st.text_input(
+                    "Caminho do arquivo:",
+                    value="grandes_litigantes_202504.parquet"
+                )
+                if caminho and Path(caminho).exists():
+                    if st.button("📂 Carregar"):
+                        df = carregar_dados_grandes(caminho)
+                elif caminho:
+                    st.error("Arquivo não encontrado")
             
-    else:  # Dados simulados
+    else:  # Dados simulados (🎭 Dados simulados)
         st.sidebar.info("Usando dados simulados para demonstração")
         # Criar dados fake para teste com empresas reais
         np.random.seed(42)
