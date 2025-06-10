@@ -192,7 +192,13 @@ $('#btnCarregar').click(function() {
                 $('#totalProcessos').text(formatNumber(resp.stats.total_processos));
                 $('#stats').show();
                 $('#analises').show();
-                $('#status').removeClass('alert-info').addClass('alert-success').text('Dados carregados!');
+                
+                if (resp.stats.is_demo) {
+                    $('#status').removeClass('alert-info').addClass('alert-warning')
+                             .html('<i class="bi bi-info-circle"></i> <strong>Dados de Demonstração carregados!</strong><br>Os dados reais serão baixados automaticamente quando a conexão permitir.');
+                } else {
+                    $('#status').removeClass('alert-info').addClass('alert-success').text('Dados reais carregados!');
+                }
             }
         },
         error: function(xhr) {
