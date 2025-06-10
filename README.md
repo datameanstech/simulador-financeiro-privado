@@ -15,7 +15,7 @@
 
 ### 📁 Como usar
 1. Acesse a aplicação
-2. Digite a senha: `pdpj2024`
+2. Digite a senha: ``
 3. **Faça upload** do seu arquivo de dados (.parquet recomendado)
 4. Explore as análises e simulações
 
