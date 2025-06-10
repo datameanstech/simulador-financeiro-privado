@@ -319,23 +319,59 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
         df = None
         n_rows = None  # Inicializar variável para evitar erro
         
-        # PARQUET: Muito mais eficiente - carregar arquivo completo
+        # PARQUET: Carregar de forma eficiente para evitar crash
         if file_extension == '.parquet':
             try:
                 st.info("🚀 Carregando arquivo Parquet (formato otimizado)...")
                 
-                # Para arquivos muito grandes, usar lazy loading
-                if file_size > 1024**3:  # > 1GB
-                    df_lazy = pl.scan_parquet(arquivo_path)
-                    df = df_lazy.collect(streaming=True)
-                    st.success("✅ Arquivo Parquet carregado com lazy loading")
+                # Para Streamlit Cloud, usar estratégia conservadora
+                if file_size > 50 * 1024 * 1024:  # > 50MB
+                    st.info("📊 Arquivo grande detectado - carregando com lazy loading otimizado...")
+                    
+                    try:
+                        # Estratégia 1: Lazy loading com streaming
+                        df_lazy = pl.scan_parquet(arquivo_path)
+                        
+                        # Verificar quantas linhas existem primeiro
+                        total_rows = df_lazy.select(pl.len()).collect().item()
+                        st.info(f"📈 Total de registros: {total_rows:,}")
+                        
+                        # Se muitas linhas, carregar uma amostra significativa primeiro
+                        if total_rows > 500_000:
+                            st.warning("⚠️ Arquivo muito grande para Streamlit Cloud - carregando amostra otimizada")
+                            sample_size = 100_000
+                            df = df_lazy.head(sample_size).collect()
+                            st.info(f"✅ Amostra carregada: {len(df):,} de {total_rows:,} registros ({sample_size/total_rows*100:.1f}%)")
+                        else:
+                            # Carregar tudo se não for excessivo
+                            with st.spinner("💾 Processando dados..."):
+                                df = df_lazy.collect(streaming=True)
+                            st.success(f"✅ Arquivo completo carregado: {len(df):,} registros")
+                            
+                    except Exception as lazy_error:
+                        st.warning(f"⚠️ Lazy loading falhou: {str(lazy_error)}")
+                        st.info("🔄 Tentando carregamento direto com limitação...")
+                        
+                        # Fallback: carregar apenas parte do arquivo
+                        df = pl.read_parquet(arquivo_path, n_rows=50_000)
+                        st.success(f"✅ Amostra carregada (fallback): {len(df):,} registros")
+                        
                 else:
+                    # Arquivo pequeno, carregar normalmente
                     df = pl.read_parquet(arquivo_path)
-                    st.success("✅ Arquivo Parquet carregado diretamente")
+                    st.success(f"✅ Arquivo carregado diretamente: {len(df):,} registros")
                     
             except Exception as e:
                 st.error(f"❌ Erro ao carregar Parquet: {str(e)}")
-                return pl.DataFrame()
+                st.info("💡 Tentando carregar apenas uma amostra...")
+                
+                try:
+                    # Último recurso: carregar apenas primeiras linhas
+                    df = pl.read_parquet(arquivo_path, n_rows=10_000)
+                    st.warning(f"⚠️ Carregada apenas amostra de emergência: {len(df):,} registros")
+                except:
+                    st.error("❌ Não foi possível carregar nenhuma parte do arquivo")
+                    return pl.DataFrame()
         
         # CSV: Fallback para arquivos antigos
         else:
@@ -399,6 +435,22 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
         else:
             st.info(f"📈 Carregadas {len(df):,} linhas do arquivo {file_size/(1024**3):.1f}GB")
         
+        # Verificar uso de memória e otimizar se necessário
+        if len(df) > 100_000:
+            st.info("🔧 Otimizando tipos de dados para reduzir uso de memória...")
+            try:
+                # Otimizar tipos numéricos para economizar memória
+                for col in df.columns:
+                    if df[col].dtype == pl.Int64:
+                        # Tentar converter para Int32 se os valores permitirem
+                        max_val = df[col].max()
+                        if max_val is not None and max_val < 2147483647:
+                            df = df.with_columns(pl.col(col).cast(pl.Int32))
+                
+                st.success("✅ Dados otimizados para melhor performance")
+            except Exception as e:
+                st.warning(f"⚠️ Otimização de memória falhou: {e}")
+        
         # Limpeza básica
         st.info("🧹 Limpando e validando dados...")
         
@@ -453,12 +505,23 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
         
         # Filtrar apenas registros válidos
         # Baseado na análise: 35.7% têm NOVOS=0, então filtrar NOVOS > 0 é necessário
+        st.info("🔍 Filtrando registros válidos...")
+        
         df_validos = df.filter(
             (pl.col('NOVOS').is_not_null()) &
             (pl.col('NOVOS').cast(pl.Int32, strict=False) > 0) &  # Excluir NOVOS = 0
             (pl.col('ÓRGÃO').is_not_null()) &
             (pl.col('TRIBUNAL').is_not_null())
         )
+        
+        # Se muitos registros válidos, aplicar limitação para Streamlit Cloud
+        if len(df_validos) > 200_000:
+            st.warning(f"⚠️ Muitos registros válidos ({len(df_validos):,}) - aplicando limitação para melhor performance")
+            
+            # Manter uma amostra representativa
+            sample_ratio = 150_000 / len(df_validos)
+            df_validos = df_validos.sample(fraction=sample_ratio, seed=42)
+            st.info(f"📊 Amostra representativa selecionada: {len(df_validos):,} registros ({sample_ratio*100:.1f}%)")
         
         # Filtro adicional: remover gabinetes/zonas eleitorais se estiver usando coluna inadequada
         if coluna_empresa == 'ÓRGÃO':
