@@ -78,11 +78,12 @@ def detectar_encoding(arquivo_path: str) -> str:
 def carregar_dados_do_drive(file_id: str, nome_arquivo: str) -> pl.DataFrame:
     """Carrega dados diretamente do Google Drive com múltiplas estratégias"""
     
-    # Estratégias de URL do Google Drive
+    # Estratégias de URL do Google Drive (ordem de prioridade)
     urls_para_tentar = [
-        f"https://drive.google.com/uc?id={file_id}&export=download",
-        f"https://drive.google.com/uc?export=download&id={file_id}",
-        f"https://docs.google.com/uc?export=download&id={file_id}"
+        f"https://drive.usercontent.google.com/download?id={file_id}&export=download&authuser=0",
+        f"https://drive.google.com/uc?id={file_id}&export=download&confirm=t",
+        f"https://drive.google.com/uc?export=download&id={file_id}&confirm=t",
+        f"https://docs.google.com/uc?export=download&id={file_id}&confirm=t"
     ]
     
     for i, drive_url in enumerate(urls_para_tentar, 1):
@@ -101,15 +102,58 @@ def carregar_dados_do_drive(file_id: str, nome_arquivo: str) -> pl.DataFrame:
                 response = session.get(drive_url, stream=True)
                 
                 # Verificar se o Google Drive está pedindo confirmação de vírus
-                if 'confirm=' in response.text and 'download_warning' in response.text:
-                    st.info("⚠️ Arquivo grande detectado - processando confirmação...")
+                response_text = response.text if hasattr(response, 'text') else ""
+                
+                if any(keyword in response_text.lower() for keyword in ['download_warning', 'virus scan', 'too large', 'can\'t scan']):
+                    st.info("⚠️ Arquivo grande detectado - processando confirmação de vírus...")
                     
-                    # Extrair token de confirmação
-                    import re
-                    confirm_token = re.search(r'confirm=([^&]+)', response.text)
+                    # Estratégias para contornar confirmação
+                    confirmation_patterns = [
+                        r'confirm=([^&"\s]+)',
+                        r'"confirm":"([^"]+)"',
+                        r'name="confirm" value="([^"]+)"'
+                    ]
+                    
+                    confirm_token = None
+                    for pattern in confirmation_patterns:
+                        match = re.search(pattern, response_text)
+                        if match:
+                            confirm_token = match.group(1)
+                            break
+                    
                     if confirm_token:
-                        confirm_url = f"{drive_url}&confirm={confirm_token.group(1)}"
-                        response = session.get(confirm_url, stream=True)
+                        # Tentar diferentes formatos de URL de confirmação
+                        confirm_urls = [
+                            f"{drive_url}&confirm={confirm_token}",
+                            f"https://drive.usercontent.google.com/download?id={file_id}&export=download&confirm={confirm_token}&authuser=0",
+                            f"https://drive.google.com/uc?export=download&confirm={confirm_token}&id={file_id}"
+                        ]
+                        
+                        for confirm_url in confirm_urls:
+                            try:
+                                st.info(f"🔄 Tentando confirmação: {confirm_url[:80]}...")
+                                response = session.get(confirm_url, stream=True)
+                                if response.headers.get('content-type', '').startswith('application/'):
+                                    st.success("✅ Confirmação aceita!")
+                                    break
+                            except:
+                                continue
+                    else:
+                        # Se não encontrar token, tentar URLs pré-confirmadas
+                        preconfirmed_urls = [
+                            f"https://drive.usercontent.google.com/download?id={file_id}&export=download&confirm=t&authuser=0",
+                            f"https://drive.google.com/uc?export=download&confirm=t&id={file_id}"
+                        ]
+                        
+                        for confirm_url in preconfirmed_urls:
+                            try:
+                                st.info(f"🔄 Tentando pré-confirmação...")
+                                response = session.get(confirm_url, stream=True)
+                                if not 'text/html' in response.headers.get('content-type', ''):
+                                    st.success("✅ Pré-confirmação aceita!")
+                                    break
+                            except:
+                                continue
                 
                 response.raise_for_status()
             
@@ -881,7 +925,8 @@ def main():
     
     if arquivo_opcao == "🚀 Google Drive (Recomendado)":
         st.sidebar.info("📡 Carregando do arquivo padrão no Google Drive")
-        st.sidebar.markdown("**Arquivo:** `grandes_litigantes_202504.parquet`")
+        st.sidebar.markdown("**Arquivo:** `grandes_litigantes_202504.parquet` (237MB)")
+        st.sidebar.markdown("**Status:** ✅ Público e verificado")
         
         col1, col2 = st.sidebar.columns(2)
         
