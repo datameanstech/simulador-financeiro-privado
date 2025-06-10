@@ -122,14 +122,23 @@ class DataManager:
             print(f"❌ Erro geral no download: {e}")
             return False
     
-    def load_data(self, limit=500000):
+    def load_data(self, limit=0):
         try:
+            load_all = (limit == 0)
+            
             # Tentar carregar arquivo local primeiro
             if os.path.exists(self.cache_file):
                 print(f"📂 Carregando arquivo local: {self.cache_file}")
                 try:
                     df_lazy = pl.scan_parquet(self.cache_file)
-                    self.df = df_lazy.head(limit).collect()
+                    
+                    if load_all:
+                        print("🔥 Carregando TODOS os registros...")
+                        self.df = df_lazy.collect()
+                    else:
+                        print(f"📊 Carregando {limit:,} registros...")
+                        self.df = df_lazy.head(limit).collect()
+                    
                     print(f"✅ Dados carregados do arquivo local: {len(self.df):,} registros")
                     return self.df
                 except Exception as e:
@@ -137,21 +146,31 @@ class DataManager:
                     os.remove(self.cache_file)
             
             # Se não existe arquivo local, tentar download
-            print("🌐 Tentando download do Google Drive...")
+            if load_all:
+                print("🌐 Tentando download COMPLETO do Google Drive (14M+ registros)...")
+            else:
+                print(f"🌐 Tentando download do Google Drive ({limit:,} registros)...")
+                
             if not self.download_data():
                 print("⚠️ Download falhou, gerando dados de teste...")
-                return self._create_fallback_data(limit)
+                return self._create_fallback_data(limit if not load_all else 10000)
             
             # Carregar dados baixados
             df_lazy = pl.scan_parquet(self.cache_file)
-            self.df = df_lazy.head(limit).collect()
+            
+            if load_all:
+                print("🔥 Processando TODOS os registros (pode demorar)...")
+                self.df = df_lazy.collect()
+            else:
+                self.df = df_lazy.head(limit).collect()
+            
             print(f"✅ Dados carregados: {len(self.df):,} registros")
             return self.df
             
         except Exception as e:
             print(f"❌ Erro ao carregar: {e}")
             print("🔄 Tentando dados de fallback...")
-            return self._create_fallback_data(limit)
+            return self._create_fallback_data(limit if not load_all else 10000)
     
     def _create_fallback_data(self, limit):
         """Criar dados de demonstração em caso de falha"""
@@ -247,9 +266,12 @@ def dashboard():
 def api_carregar_dados():
     try:
         data = request.get_json()
-        limit = data.get('limit', 500000)
+        limit = data.get('limit', 0)
         
-        print(f"🔄 Solicitação de carregamento: {limit:,} registros")
+        if limit == 0:
+            print("🔄 Solicitação de carregamento: TODOS os registros (14M+)")
+        else:
+            print(f"🔄 Solicitação de carregamento: {limit:,} registros")
         
         df = data_manager.load_data(limit=limit)
         if df is None:
