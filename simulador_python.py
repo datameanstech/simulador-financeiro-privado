@@ -324,8 +324,8 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
             try:
                 st.info("🚀 Carregando arquivo Parquet (formato otimizado)...")
                 
-                # Para Streamlit Cloud, usar estratégia conservadora
-                if file_size > 50 * 1024 * 1024:  # > 50MB
+                # Para arquivos grandes, usar estratégia otimizada
+                if file_size > 100 * 1024 * 1024:  # > 100MB
                     st.info("📊 Arquivo grande detectado - carregando com lazy loading otimizado...")
                     
                     try:
@@ -336,25 +336,20 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
                         total_rows = df_lazy.select(pl.len()).collect().item()
                         st.info(f"📈 Total de registros: {total_rows:,}")
                         
-                        # Se muitas linhas, carregar uma amostra significativa primeiro
-                        if total_rows > 500_000:
-                            st.warning("⚠️ Arquivo muito grande para Streamlit Cloud - carregando amostra otimizada")
-                            sample_size = 100_000
-                            df = df_lazy.head(sample_size).collect()
-                            st.info(f"✅ Amostra carregada: {len(df):,} de {total_rows:,} registros ({sample_size/total_rows*100:.1f}%)")
-                        else:
-                            # Carregar tudo se não for excessivo
-                            with st.spinner("💾 Processando dados..."):
-                                df = df_lazy.collect(streaming=True)
-                            st.success(f"✅ Arquivo completo carregado: {len(df):,} registros")
+                        # Carregar arquivo completo com streaming otimizado
+                        st.info(f"💾 Processando {total_rows:,} registros com lazy loading...")
+                        with st.spinner("📊 Carregando dados completos (pode levar alguns minutos)..."):
+                            df = df_lazy.collect(streaming=True)
+                        st.success(f"✅ Arquivo completo carregado: {len(df):,} registros")
                             
                     except Exception as lazy_error:
                         st.warning(f"⚠️ Lazy loading falhou: {str(lazy_error)}")
                         st.info("🔄 Tentando carregamento direto com limitação...")
                         
-                        # Fallback: carregar apenas parte do arquivo
-                        df = pl.read_parquet(arquivo_path, n_rows=50_000)
-                        st.success(f"✅ Amostra carregada (fallback): {len(df):,} registros")
+                        # Fallback: carregar diretamente sem lazy loading
+                        st.info("🔄 Tentando carregamento direto...")
+                        df = pl.read_parquet(arquivo_path)
+                        st.success(f"✅ Arquivo carregado (fallback direto): {len(df):,} registros")
                         
                 else:
                     # Arquivo pequeno, carregar normalmente
@@ -366,11 +361,13 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
                 st.info("💡 Tentando carregar apenas uma amostra...")
                 
                 try:
-                    # Último recurso: carregar apenas primeiras linhas
-                    df = pl.read_parquet(arquivo_path, n_rows=10_000)
-                    st.warning(f"⚠️ Carregada apenas amostra de emergência: {len(df):,} registros")
-                except:
-                    st.error("❌ Não foi possível carregar nenhuma parte do arquivo")
+                    # Último recurso: tentar read direto
+                    st.info("🆘 Última tentativa com carregamento básico...")
+                    df = pl.read_parquet(arquivo_path)
+                    st.warning(f"⚠️ Carregado com método básico: {len(df):,} registros")
+                except Exception as final_error:
+                    st.error(f"❌ Não foi possível carregar o arquivo: {final_error}")
+                    st.info("💡 Tente a opção 'Upload de arquivo' ou 'Dados simulados'")
                     return pl.DataFrame()
         
         # CSV: Fallback para arquivos antigos
@@ -514,14 +511,12 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
             (pl.col('TRIBUNAL').is_not_null())
         )
         
-        # Se muitos registros válidos, aplicar limitação para Streamlit Cloud
+        # Informar sobre quantidade de registros válidos
         if len(df_validos) > 200_000:
-            st.warning(f"⚠️ Muitos registros válidos ({len(df_validos):,}) - aplicando limitação para melhor performance")
-            
-            # Manter uma amostra representativa
-            sample_ratio = 150_000 / len(df_validos)
-            df_validos = df_validos.sample(fraction=sample_ratio, seed=42)
-            st.info(f"📊 Amostra representativa selecionada: {len(df_validos):,} registros ({sample_ratio*100:.1f}%)")
+            st.info(f"📊 Grande volume de dados válidos: {len(df_validos):,} registros")
+            st.info("⏳ Processamento pode levar alguns minutos - aguarde...")
+        else:
+            st.info(f"📊 Registros válidos encontrados: {len(df_validos):,}")
         
         # Filtro adicional: remover gabinetes/zonas eleitorais se estiver usando coluna inadequada
         if coluna_empresa == 'ÓRGÃO':
@@ -990,6 +985,7 @@ def main():
         st.sidebar.info("📡 Carregando do arquivo padrão no Google Drive")
         st.sidebar.markdown("**Arquivo:** `grandes_litigantes_202504.parquet` (237MB)")
         st.sidebar.markdown("**Status:** ✅ Público e verificado")
+        st.sidebar.markdown("**Modo:** 📊 Carregamento completo dos dados")
         
         col1, col2 = st.sidebar.columns(2)
         
