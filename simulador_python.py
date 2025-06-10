@@ -336,11 +336,47 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
                         total_rows = df_lazy.select(pl.len()).collect().item()
                         st.info(f"📈 Total de registros: {total_rows:,}")
                         
-                        # Carregar arquivo completo com streaming otimizado
-                        st.info(f"💾 Processando {total_rows:,} registros com lazy loading...")
-                        with st.spinner("📊 Carregando dados completos (pode levar alguns minutos)..."):
-                            df = df_lazy.collect(streaming=True)
-                        st.success(f"✅ Arquivo completo carregado: {len(df):,} registros")
+                        # Verificar se o volume é muito grande para Streamlit Cloud
+                        if total_rows > 1_000_000:
+                            st.warning(f"⚠️ Volume muito grande: {total_rows:,} registros")
+                            st.info("🎯 Para melhor performance, escolha quantos registros carregar:")
+                            
+                            # Opções de quantidade
+                            opcoes_registros = {
+                                "100.000 registros (Rápido)": 100_000,
+                                "500.000 registros (Médio)": 500_000, 
+                                "1.000.000 registros (Completo)": 1_000_000,
+                                "Todos os registros (Lento)": total_rows
+                            }
+                            
+                            escolha = st.selectbox(
+                                "📊 Quantidade de registros:",
+                                list(opcoes_registros.keys()),
+                                index=1  # Default: 500k
+                            )
+                            
+                            n_registros = opcoes_registros[escolha]
+                            
+                            if st.button("🚀 Carregar com configuração selecionada"):
+                                if n_registros >= total_rows:
+                                    st.info(f"💾 Carregando TODOS os {total_rows:,} registros...")
+                                    with st.spinner("📊 Processando dados completos (pode levar vários minutos)..."):
+                                        df = df_lazy.collect(streaming=True)
+                                else:
+                                    st.info(f"💾 Carregando primeiros {n_registros:,} registros...")
+                                    with st.spinner(f"📊 Processando {n_registros:,} registros..."):
+                                        df = df_lazy.head(n_registros).collect()
+                                        
+                                st.success(f"✅ Dados carregados: {len(df):,} registros")
+                            else:
+                                # Não carregar ainda, aguardar seleção
+                                return pl.DataFrame()
+                        else:
+                            # Volume normal, carregar tudo
+                            st.info(f"💾 Carregando {total_rows:,} registros...")
+                            with st.spinner("📊 Processando dados..."):
+                                df = df_lazy.collect(streaming=True)
+                            st.success(f"✅ Arquivo completo carregado: {len(df):,} registros")
                             
                     except Exception as lazy_error:
                         st.warning(f"⚠️ Lazy loading falhou: {str(lazy_error)}")
