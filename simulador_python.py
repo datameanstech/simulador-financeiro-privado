@@ -218,6 +218,50 @@ def carregar_dados_do_drive(file_id: str, nome_arquivo: str) -> pl.DataFrame:
     
     return pl.DataFrame()
 
+@st.cache_data  
+def gerar_dados_simulados() -> pl.DataFrame:
+    """Gera dados simulados para demonstração"""
+    import random
+    
+    st.info("🎭 Gerando dados simulados com empresas brasileiras...")
+    
+    # Empresas brasileiras conhecidas
+    empresas = [
+        'BANCO DO BRASIL S.A.', 'ITAÚ UNIBANCO S.A.', 'BRADESCO S.A.', 'SANTANDER BRASIL S.A.',
+        'TELEFÔNICA BRASIL S.A.', 'TIM S.A.', 'CLARO S.A.', 'OI S.A.',
+        'PETROBRAS S.A.', 'VALE S.A.', 'AMBEV S.A.', 'JBS S.A.',
+        'MAGAZINE LUIZA S.A.', 'VIA VAREJO S.A.', 'LOJAS AMERICANAS S.A.', 'B2W DIGITAL S.A.',
+        'BANCO SANTANDER S.A.', 'CAIXA ECONÔMICA FEDERAL', 'BANCO INTER S.A.', 'NUBANK S.A.',
+        'EMBRAER S.A.', 'GERDAU S.A.', 'USIMINAS S.A.', 'CSN S.A.',
+        'CARREFOUR BRASIL S.A.', 'WALMART BRASIL S.A.', 'ATACADÃO S.A.', 'GRUPO PÃO DE AÇÚCAR S.A.'
+    ] * 36  # Repetir para ter 1000 registros
+    
+    ramos = [
+        'BANCOS E SERVIÇOS FINANCEIROS', 'TELECOMUNICAÇÕES', 'ENERGIA E PETRÓLEO', 
+        'VAREJO E COMÉRCIO', 'SIDERURGIA E MINERAÇÃO', 'ALIMENTAÇÃO E BEBIDAS',
+        'TECNOLOGIA', 'CONSTRUÇÃO CIVIL', 'SAÚDE', 'EDUCAÇÃO'
+    ]
+    
+    # Usar seed fixa para dados consistentes
+    np.random.seed(42)
+    random.seed(42)
+    
+    dados_fake = {
+        'ÓRGÃO': empresas[:1000],
+        'TRIBUNAL': np.random.choice(['TRT1', 'TRT2', 'TJSP', 'TRF1', 'TST', 'TJRJ', 'TJMG'], 1000),
+        'GRAU': np.random.choice(['1º GRAU', '2º GRAU', 'INSTÂNCIA ÚNICA'], 1000),
+        'RAMO': np.random.choice(ramos, 1000),
+        'NOVOS': np.random.randint(100, 5000, 1000),
+        'PENDENTES BRUTO': np.random.randint(500, 20000, 1000),
+        'PENDENTES LÍQUIDO': np.random.randint(300, 15000, 1000),
+        'SEGMENTO': np.random.choice(['ADMINISTRAÇÃO PÚBLICA', 'TELECOMUNICAÇÕES', 'BANCÁRIO', 'VAREJO', 'ENERGIA'], 1000)
+    }
+    
+    df = pl.DataFrame(dados_fake)
+    st.success(f"✅ Dados simulados gerados: {len(df):,} registros")
+    
+    return df
+
 @st.cache_data
 def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
     """Carrega e processa o arquivo de 3GB com cache - versão otimizada para Parquet e CSV"""
@@ -839,9 +883,38 @@ def main():
         st.sidebar.info("📡 Carregando do arquivo padrão no Google Drive")
         st.sidebar.markdown("**Arquivo:** `grandes_litigantes_202504.parquet`")
         
-        if st.sidebar.button("🚀 Carregar dados do Drive", help="Carrega automaticamente do Google Drive"):
-            file_id = "1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E"
-            df = carregar_dados_do_drive(file_id, "grandes_litigantes_202504.parquet")
+        col1, col2 = st.sidebar.columns(2)
+        
+        with col1:
+            if st.button("🚀 Carregar do Drive", help="Carrega automaticamente do Google Drive"):
+                file_id = "1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E"
+                df = carregar_dados_do_drive(file_id, "grandes_litigantes_202504.parquet")
+        
+        with col2:
+            if st.button("🎭 Usar Simulados", help="Usa dados simulados se o Drive falhar"):
+                st.info("🎭 Carregando dados simulados...")
+                df = gerar_dados_simulados()
+        
+        # Opções avançadas para Google Drive
+        with st.sidebar.expander("🔧 Configurações do Drive"):
+            st.markdown("**Problemas com Google Drive?**")
+            
+            custom_file_id = st.text_input(
+                "ID do arquivo (se tiver outro link):",
+                value="1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E",
+                help="Cole aqui apenas o ID do arquivo do Google Drive"
+            )
+            
+            if st.button("🔄 Tentar com ID personalizado"):
+                if custom_file_id:
+                    df = carregar_dados_do_drive(custom_file_id, "arquivo_personalizado.parquet")
+            
+            st.markdown("---")
+            st.markdown("**💡 Como tornar arquivo público:**")
+            st.markdown("1. Abra o Google Drive")
+            st.markdown("2. Clique direito no arquivo → Compartilhar")
+            st.markdown("3. Mude para 'Qualquer pessoa na internet'")
+            st.markdown("4. Cole o novo ID do arquivo acima")
     
     elif arquivo_opcao == "📁 Upload de arquivo":
         uploaded_file = st.sidebar.file_uploader(
