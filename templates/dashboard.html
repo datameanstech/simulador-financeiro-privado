@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Simulador Financeiro{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 text-white">
+                <i class="bi bi-speedometer2"></i> Dashboard Analítico
+            </h1>
+            <p class="lead text-white-50">Bem-vindo, {{ username }}!</p>
+        </div>
+    </div>
+
+    <!-- Carregamento -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-database"></i> Carregamento de Dados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <select class="form-select" id="limitSelect">
+                                <option value="100000">100.000 (Rápido)</option>
+                                <option value="500000" selected>500.000 (Recomendado)</option>
+                                <option value="1000000">1.000.000 (Completo)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-success" id="btnCarregar">
+                                <i class="bi bi-download"></i> Carregar Dados
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <div id="status" class="alert alert-info d-none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4" id="stats" style="display: none;">
+        <div class="col-md-6">
+            <div class="stats-card">
+                <div class="stats-number" id="totalRegistros">0</div>
+                <div>Total de Registros</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stats-card">
+                <div class="stats-number" id="totalProcessos">0</div>
+                <div>Processos Novos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análises -->
+    <div class="row mb-4" id="analises" style="display: none;">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> Análises</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button class="btn btn-primary w-100" id="btnRanking">
+                                <i class="bi bi-trophy"></i> Ranking Empresas
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-warning w-100" id="btnSimulacao">
+                                <i class="bi bi-calculator"></i> Simulação Financeira
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Config Simulação -->
+    <div class="row mb-4" id="configSim" style="display: none;">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-gear"></i> Configurações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Preço por Processo (R$):</label>
+                            <input type="number" class="form-control" id="preco" value="50">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Taxa Conversão (%):</label>
+                            <input type="number" class="form-control" id="conversao" value="5">
+                        </div>
+                        <div class="col-md-4">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-success w-100" id="btnExecSim">
+                                Executar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="row" id="resultados" style="display: none;">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-bar-chart"></i> Resultados</h5>
+                </div>
+                <div class="card-body" id="conteudo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center py-5" id="loading" style="display: none;">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-3 text-white">Processando...</p>
+    </div>
+</div>
+
+<style>
+.stats-card {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    color: white;
+    border-radius: 15px 15px 0 0 !important;
+}
+
+.table thead th {
+    background: #2c3e50;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let dadosOK = false;
+
+function formatNumber(num) {
+    return new Intl.NumberFormat('pt-BR').format(num);
+}
+
+function formatCurrency(num) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(num);
+}
+
+$('#btnCarregar').click(function() {
+    const limit = parseInt($('#limitSelect').val());
+    
+    $('#loading').show();
+    $('#status').removeClass('d-none alert-success alert-danger').addClass('alert-info').text('Carregando...');
+    
+    $.ajax({
+        url: '/api/carregar-dados',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({limit: limit}),
+        success: function(resp) {
+            if (resp.success) {
+                dadosOK = true;
+                $('#totalRegistros').text(formatNumber(resp.stats.total_registros));
+                $('#totalProcessos').text(formatNumber(resp.stats.total_processos));
+                $('#stats').show();
+                $('#analises').show();
+                $('#status').removeClass('alert-info').addClass('alert-success').text('Dados carregados!');
+            }
+        },
+        error: function(xhr) {
+            $('#status').removeClass('alert-info').addClass('alert-danger').text('Erro: ' + (xhr.responseJSON?.error || 'Falha'));
+        },
+        complete: function() {
+            $('#loading').hide();
+        }
+    });
+});
+
+$('#btnRanking').click(function() {
+    if (!dadosOK) { alert('Carregue os dados primeiro!'); return; }
+    
+    $('#loading').show();
+    
+    $.ajax({
+        url: '/api/ranking',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({}),
+        success: function(resp) {
+            if (resp.success) {
+                let html = '<h6>🏆 Top 20 Empresas</h6>';
+                html += '<table class="table table-striped">';
+                html += '<thead><tr><th>Pos</th><th>Empresa</th><th>Processos</th></tr></thead><tbody>';
+                
+                resp.ranking.forEach(function(item) {
+                    html += `<tr><td>${item.posicao}</td><td>${item.empresa}</td><td>${formatNumber(item.processos)}</td></tr>`;
+                });
+                
+                html += '</tbody></table>';
+                $('#conteudo').html(html);
+                $('#resultados').show();
+            }
+        },
+        complete: function() { $('#loading').hide(); }
+    });
+});
+
+$('#btnSimulacao').click(function() {
+    if (!dadosOK) { alert('Carregue os dados primeiro!'); return; }
+    $('#configSim').show();
+});
+
+$('#btnExecSim').click(function() {
+    const preco = parseFloat($('#preco').val());
+    const conversao = parseFloat($('#conversao').val());
+    
+    $('#loading').show();
+    
+    $.ajax({
+        url: '/api/simulacao',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({preco: preco, conversao: conversao}),
+        success: function(resp) {
+            if (resp.success) {
+                let html = `<h6>💰 Simulação (R$ ${preco}/proc, ${conversao}%)</h6>`;
+                html += '<table class="table table-striped">';
+                html += '<thead><tr><th>Empresa</th><th>Processos</th><th>Clientes</th><th>Receita/Mês</th></tr></thead><tbody>';
+                
+                resp.simulacao.forEach(function(item) {
+                    html += `<tr>
+                        <td>${item.empresa}</td>
+                        <td>${formatNumber(item.processos)}</td>
+                        <td>${formatNumber(item.clientes_potenciais)}</td>
+                        <td>${formatCurrency(item.receita_mensal)}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                $('#conteudo').html(html);
+                $('#resultados').show();
+            }
+        },
+        complete: function() { $('#loading').hide(); }
+    });
+});
+</script>
+{% endblock %} 

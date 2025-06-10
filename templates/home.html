@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Simulador Financeiro - Grandes Litigantes{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-3 fw-bold text-white mb-4">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    Simulador Financeiro
+                </h1>
+                <h2 class="h4 text-white-50 mb-4">
+                    Análise Estratégica de Grandes Litigantes
+                </h2>
+                <p class="lead text-white-50 mb-5">
+                    Plataforma profissional para análise de dados jurídicos com mais de 14 milhões de registros. 
+                    Simule oportunidades de negócio e identifique os maiores potenciais do mercado.
+                </p>
+                
+                <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-5 py-3">
+                        <i class="bi bi-box-arrow-in-right"></i> Acessar Sistema
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-database-fill display-4 text-primary"></i>
+                    </div>
+                    <h4 class="card-title">14+ Milhões de Registros</h4>
+                    <p class="card-text">
+                        Base completa de dados dos grandes litigantes do Brasil, 
+                        atualizada e processada para análises precisas.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-graph-up display-4 text-success"></i>
+                    </div>
+                    <h4 class="card-title">Simulações Avançadas</h4>
+                    <p class="card-text">
+                        Calcule potencial de receita, ROI e identifique as melhores 
+                        oportunidades de negócio no mercado jurídico.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-check display-4 text-warning"></i>
+                    </div>
+                    <h4 class="card-title">Acesso Seguro</h4>
+                    <p class="card-text">
+                        Sistema com autenticação segura e dados protegidos. 
+                        Acesso exclusivo para usuários autorizados.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h3 class="display-6 fw-bold mb-4">Funcionalidades Principais</h3>
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-3"></i>
+                        <strong>Ranking de Empresas:</strong> Identifique os maiores litigantes
+                    </li>
+                    <li class="mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-3"></i>
+                        <strong>Análise por Tribunais:</strong> Distribuição geográfica dos processos
+                    </li>
+                    <li class="mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-3"></i>
+                        <strong>Simulação Financeira:</strong> Calcule receita potencial e ROI
+                    </li>
+                    <li class="mb-3">
+                        <i class="bi bi-check-circle-fill text-success me-3"></i>
+                        <strong>Relatórios Detalhados:</strong> Insights estratégicos para tomada de decisão
+                    </li>
+                </ul>
+            </div>
+            <div class="col-lg-6">
+                <div class="text-center">
+                    <i class="bi bi-laptop display-1 text-primary"></i>
+                    <p class="mt-3 text-muted">Interface intuitiva e responsiva</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-section {
+    padding: 6rem 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9));
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.display-4 {
+    font-size: 3rem;
+}
+</style>
+{% endblock %} 
