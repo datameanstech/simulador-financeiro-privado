@@ -17,6 +17,7 @@ from typing import Dict, List, Tuple, Optional
 import requests
 import io
 import tempfile
+import re
 
 # Configuração da página
 st.set_page_config(
@@ -74,72 +75,148 @@ def detectar_encoding(arquivo_path: str) -> str:
         return 'utf-8'  # Fallback padrão
 
 @st.cache_data
-def carregar_dados_do_drive(drive_url: str, nome_arquivo: str) -> pl.DataFrame:
-    """Carrega dados diretamente do Google Drive"""
-    try:
-        st.info(f"📡 Baixando arquivo do Google Drive: {nome_arquivo}")
-        
-        # Fazer o download do arquivo
-        with st.spinner("⏳ Conectando ao Google Drive..."):
-            response = requests.get(drive_url, stream=True)
-            response.raise_for_status()
-        
-        # Verificar o tamanho do arquivo
-        content_length = response.headers.get('content-length')
-        if content_length:
-            size_mb = int(content_length) / (1024 * 1024)
-            st.info(f"📊 Tamanho do arquivo: {size_mb:.1f} MB")
-        
-        # Salvar temporariamente e carregar
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.parquet') as tmp_file:
-            st.info("💾 Salvando arquivo temporário...")
+def carregar_dados_do_drive(file_id: str, nome_arquivo: str) -> pl.DataFrame:
+    """Carrega dados diretamente do Google Drive com múltiplas estratégias"""
+    
+    # Estratégias de URL do Google Drive
+    urls_para_tentar = [
+        f"https://drive.google.com/uc?id={file_id}&export=download",
+        f"https://drive.google.com/uc?export=download&id={file_id}",
+        f"https://docs.google.com/uc?export=download&id={file_id}"
+    ]
+    
+    for i, drive_url in enumerate(urls_para_tentar, 1):
+        try:
+            st.info(f"📡 Tentativa {i}/3: Baixando {nome_arquivo} do Google Drive")
+            st.info(f"🔗 URL: {drive_url}")
             
-            # Baixar com barra de progresso
-            total_size = int(content_length) if content_length else 0
-            downloaded = 0
+            # Configurar sessão com headers adequados
+            session = requests.Session()
+            session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            })
             
-            if total_size > 0:
-                progress_bar = st.progress(0)
-                status_text = st.empty()
+            with st.spinner(f"⏳ Conectando ao Google Drive (tentativa {i})..."):
+                # Primeira requisição para verificar se precisa de confirmação
+                response = session.get(drive_url, stream=True)
                 
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        tmp_file.write(chunk)
-                        downloaded += len(chunk)
-                        progress = downloaded / total_size
-                        progress_bar.progress(progress)
-                        status_text.text(f"Baixado: {downloaded/(1024*1024):.1f}/{total_size/(1024*1024):.1f} MB")
+                # Verificar se o Google Drive está pedindo confirmação de vírus
+                if 'confirm=' in response.text and 'download_warning' in response.text:
+                    st.info("⚠️ Arquivo grande detectado - processando confirmação...")
+                    
+                    # Extrair token de confirmação
+                    import re
+                    confirm_token = re.search(r'confirm=([^&]+)', response.text)
+                    if confirm_token:
+                        confirm_url = f"{drive_url}&confirm={confirm_token.group(1)}"
+                        response = session.get(confirm_url, stream=True)
                 
-                progress_bar.empty()
-                status_text.empty()
-            else:
-                # Sem informação de tamanho, baixar tudo
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        tmp_file.write(chunk)
+                response.raise_for_status()
             
-            tmp_file.flush()
+            # Verificar se realmente baixou conteúdo
+            content_length = response.headers.get('content-length')
+            if content_length and int(content_length) == 0:
+                st.warning(f"⚠️ Tentativa {i} retornou arquivo vazio")
+                continue
+                
+            # Verificar o Content-Type
+            content_type = response.headers.get('content-type', '')
+            st.info(f"📋 Content-Type: {content_type}")
             
-            st.success("✅ Arquivo baixado com sucesso!")
+            if 'text/html' in content_type:
+                st.warning(f"⚠️ Tentativa {i} retornou HTML (provável página de erro)")
+                continue
             
-            # Carregar usando a função existente
-            df = carregar_dados_grandes(tmp_file.name)
+            # Calcular tamanho
+            if content_length:
+                size_mb = int(content_length) / (1024 * 1024)
+                st.info(f"📊 Tamanho do arquivo: {size_mb:.1f} MB")
             
-            # Limpar arquivo temporário
-            try:
-                Path(tmp_file.name).unlink()
-            except:
-                pass
-            
-            return df
-            
-    except requests.exceptions.RequestException as e:
-        st.error(f"❌ Erro ao baixar do Google Drive: {str(e)}")
-        st.info("💡 Verifique se o link do Google Drive está correto e o arquivo é público")
-        return pl.DataFrame()
-    except Exception as e:
-        st.error(f"❌ Erro inesperado: {str(e)}")
-        return pl.DataFrame()
+            # Salvar temporariamente
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.parquet') as tmp_file:
+                st.info("💾 Salvando arquivo temporário...")
+                
+                total_size = int(content_length) if content_length else 0
+                downloaded = 0
+                
+                if total_size > 1024*1024:  # > 1MB, mostrar progresso
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            tmp_file.write(chunk)
+                            downloaded += len(chunk)
+                            if total_size > 0:
+                                progress = min(downloaded / total_size, 1.0)
+                                progress_bar.progress(progress)
+                                status_text.text(f"Baixado: {downloaded/(1024*1024):.1f}MB")
+                    
+                    progress_bar.empty()
+                    status_text.empty()
+                else:
+                    # Arquivo pequeno, baixar sem progresso
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            tmp_file.write(chunk)
+                            downloaded += len(chunk)
+                
+                tmp_file.flush()
+                
+                # Verificar se o arquivo foi realmente baixado
+                file_size = Path(tmp_file.name).stat().st_size
+                if file_size == 0:
+                    st.error(f"❌ Tentativa {i}: Arquivo baixado está vazio")
+                    Path(tmp_file.name).unlink()
+                    continue
+                
+                st.success(f"✅ Arquivo baixado com sucesso! ({file_size/(1024*1024):.1f} MB)")
+                
+                # Verificar se é realmente um arquivo Parquet
+                try:
+                    with open(tmp_file.name, 'rb') as f:
+                        # Verificar assinatura Parquet (PAR1 no início e fim)
+                        header = f.read(4)
+                        if header != b'PAR1':
+                            st.error(f"❌ Tentativa {i}: Arquivo baixado não é um Parquet válido")
+                            st.info(f"🔍 Header encontrado: {header}")
+                            Path(tmp_file.name).unlink()
+                            continue
+                except Exception as e:
+                    st.error(f"❌ Tentativa {i}: Erro ao verificar arquivo: {str(e)}")
+                    Path(tmp_file.name).unlink()
+                    continue
+                
+                # Carregar usando a função existente
+                df = carregar_dados_grandes(tmp_file.name)
+                
+                # Limpar arquivo temporário
+                try:
+                    Path(tmp_file.name).unlink()
+                except:
+                    pass
+                
+                if not df.is_empty():
+                    st.success(f"🎉 Dados carregados com sucesso da tentativa {i}!")
+                    return df
+                else:
+                    st.warning(f"⚠️ Tentativa {i}: DataFrame vazio após carregamento")
+                
+        except requests.exceptions.RequestException as e:
+            st.warning(f"⚠️ Tentativa {i} falhou: {str(e)}")
+            continue
+        except Exception as e:
+            st.warning(f"⚠️ Tentativa {i} - erro inesperado: {str(e)}")
+            continue
+    
+    # Se chegou aqui, todas as tentativas falharam
+    st.error("❌ Todas as tentativas de download falharam")
+    st.info("💡 Soluções:")
+    st.info("• Verifique se o arquivo no Google Drive é público")
+    st.info("• Tente a opção 'Upload de arquivo' como alternativa")
+    st.info("• Use 'Dados simulados' para testar o sistema")
+    
+    return pl.DataFrame()
 
 @st.cache_data
 def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
@@ -763,11 +840,8 @@ def main():
         st.sidebar.markdown("**Arquivo:** `grandes_litigantes_202504.parquet`")
         
         if st.sidebar.button("🚀 Carregar dados do Drive", help="Carrega automaticamente do Google Drive"):
-            google_drive_url = "https://drive.google.com/file/d/1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E/view?usp=drive_link"
-            # Converter para download direto
             file_id = "1Ns07hTZaK4Ry6bFEHvLACZ5tHJ7b-C2E"
-            download_url = f"https://drive.google.com/uc?id={file_id}&export=download"
-            df = carregar_dados_do_drive(download_url, "grandes_litigantes_202504.parquet")
+            df = carregar_dados_do_drive(file_id, "grandes_litigantes_202504.parquet")
     
     elif arquivo_opcao == "📁 Upload de arquivo":
         uploaded_file = st.sidebar.file_uploader(
