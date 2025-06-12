@@ -32,7 +32,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'pdpj2024-simulador-secreto')
 
 # Configurações globais
 SENHA_SISTEMA = "pdpj2024"
-PARQUET_FILE = "dados_grandes_litigantes_demo.parquet"
+PARQUET_FILE = "dados_grandes_litigantes.parquet"
 
 # Cache global para dados
 dados_cache = {
@@ -62,7 +62,7 @@ users_db = {
 
 class DataManager:
     def __init__(self):
-        self.parquet_file = "dados_grandes_litigantes_demo.parquet"
+        self.parquet_file = "dados_grandes_litigantes.parquet"
         self.cnae_file = "tabela_cnae_classe_subclasse.csv"
         self.df = None
         self.df_cnae = None
