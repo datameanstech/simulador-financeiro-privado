@@ -7,25 +7,166 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&display=swap" rel="stylesheet">
     
     <style>
+        /* Ultra Dark Theme - Base */
+        * {
+            font-family: "Source Sans Pro", sans-serif !important;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #000B18 0%, #00172D 30%, #00264D 70%, #02386E 100%) !important;
+            background-attachment: fixed !important;
+            color: #ffffff !important;
             min-height: 100vh;
         }
+        
         .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            background: rgba(255,255,255,0.95);
+            background-color: #00172D !important;
+            border: 1px solid #00264D !important;
+            border-radius: 4px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+            color: #ffffff !important;
         }
+        
+        .card-header {
+            background-color: #000B18 !important;
+            color: #ffffff !important;
+            border-bottom: 1px solid #00264D !important;
+        }
+        
+        .card-body {
+            background-color: #00172D !important;
+            color: #ffffff !important;
+        }
+        
+        .card-footer {
+            background-color: #000B18 !important;
+            color: #aaaaaa !important;
+            border-top: 1px solid #00264D !important;
+        }
+        
         .navbar {
-            background: rgba(44, 62, 80, 0.95) !important;
+            background: linear-gradient(90deg, #000B18 0%, #00172D 50%, #00264D 100%) !important;
+            border-bottom: 1px solid #02386E !important;
         }
+        
+        .navbar-brand {
+            color: #ff4b4b !important;
+            font-weight: 600 !important;
+        }
+        
+        .nav-link {
+            color: #ffffff !important;
+        }
+        
+        .nav-link:hover {
+            color: #ff4b4b !important;
+        }
+        
         .btn-primary {
-            background: linear-gradient(135deg, #3498db, #5dade2);
-            border: none;
-            border-radius: 10px;
+            background-color: #ff4b4b !important;
+            border-color: #ff4b4b !important;
+            color: #ffffff !important;
+            border-radius: 4px !important;
+            font-weight: 400 !important;
+        }
+        
+        .btn-primary:hover {
+            background-color: #e63946 !important;
+            border-color: #e63946 !important;
+        }
+        
+        .btn-primary:focus {
+            box-shadow: 0 0 0 0.2rem rgba(255, 75, 75, 0.25) !important;
+        }
+        
+        /* Alerts Dark Mode */
+        .alert {
+            border-radius: 4px !important;
+            border: none !important;
+            border-left: 4px solid !important;
+        }
+        
+        .alert-success {
+            background-color: #1f2a45  !important;
+            color: #ffffff !important;
+            border-left-color: #ffffff !important;
+        }
+        
+        .alert-danger {
+            background-color: #3d1a1a !important;
+            color: #f44336 !important;
+            border-left-color: #f44336 !important;
+        }
+        
+        .alert-warning {
+            background-color: #3d3a1a !important;
+            color: #ff9800 !important;
+            border-left-color: #ff9800 !important;
+        }
+        
+        .alert-info {
+            background-color: #1a2e3d !important;
+            color: #2196f3 !important;
+            border-left-color: #2196f3 !important;
+        }
+        
+        /* Form Elements Dark Mode */
+        input, select, textarea {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border: 1px solid #333333 !important;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #ff4b4b !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 75, 75, 0.25) !important;
+        }
+        
+        .form-control {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border: 1px solid #333333 !important;
+        }
+        
+        .form-control:focus {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #ff4b4b !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 75, 75, 0.25) !important;
+        }
+        
+        .form-label {
+            color: #ffffff !important;
+        }
+        
+        /* Text Colors */
+        .text-muted {
+            color: #aaaaaa !important;
+        }
+        
+        .text-white-50 {
+            color: #cccccc !important;
+        }
+        
+        /* Background overrides */
+        .bg-light {
+            background-color: #0a0f1a !important;
+        }
+        
+        small {
+            color: #aaaaaa !important;
+        }
+        
+        code {
+            background-color: #222222 !important;
+            color: #ff4b4b !important;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
         }
     </style>
 </head>

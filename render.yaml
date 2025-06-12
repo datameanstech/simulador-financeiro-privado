@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: simulador-financeiro
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: SECRET_KEY
+        value: pdpj2024-simulador-secreto-render
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1 

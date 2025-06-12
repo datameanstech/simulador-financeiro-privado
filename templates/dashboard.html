@@ -1,54 +1,678 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Simulador Financeiro{% endblock %}
+{% block title %}Dashboard - Simulador Avançado{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Barra de progresso customizada */
+.progress {
+    background-color: #222222 !important;
+    border: 1px solid #333333;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #ff4b4b, #ff6b6b, #ff8a80) !important;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Loading card ultra dark */
+.loading .card {
+    border: 2px solid #333333;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    color: white;
+}
+
+/* Ultra Dark Mode */
+body {
+    background: #000000 !important;
+    min-height: 100vh;
+    color: #ffffff;
+    font-family: "Source Sans Pro", sans-serif;
+}
+
+.card {
+    background: #111111;
+    border: 1px solid #222222;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.form-select, .form-control {
+    background-color: #000000;
+    border: 1px solid #333333;
+    color: #ffffff;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-select:focus, .form-control:focus {
+    background-color: #000000;
+    border-color: #ff4b4b;
+    box-shadow: 0 0 0 0.2rem rgba(255, 75, 75, 0.25);
+    color: #ffffff;
+}
+
+.form-select option {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.table-dark {
+    background-color: #000000;
+}
+
+.table-dark th,
+.table-dark td {
+    border-color: #333333;
+    color: #ffffff;
+}
+
+.btn-primary {
+    background-color: #ff4b4b;
+    border-color: #ff4b4b;
+    border-radius: 4px;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #ff6b6b;
+    border-color: #ff6b6b;
+    color: white;
+}
+
+/* Ultra Dark headers */
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: 2rem;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 0.5rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+}
+
+h5 {
+    font-size: 1.125rem;
+}
+
+/* Ultra Dark alerts */
+.alert {
+    border-radius: 4px;
+    border: none;
+    font-size: 14px;
+}
+
+.alert-success {
+    background-color: #1f2a45 ;
+    color: #4caf50;
+    border-left: 4px solid #4caf50;
+}
+
+.alert-info {
+    background-color: #1a2d3d;
+    color: #2196f3;
+    border-left: 4px solid #2196f3;
+}
+
+.alert-warning {
+    background-color: #3d3d1a;
+    color: #ff9800;
+    border-left: 4px solid #ff9800;
+}
+
+.alert-light {
+    background-color: #222222;
+    color: #ffffff;
+    border-left: 4px solid #666666;
+}
+
+/* Botões outline ultra dark */
+.btn-outline-secondary {
+    background-color: #000000;
+    border-color: #333333;
+    color: #ffffff;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #222222;
+    border-color: #555555;
+    color: #ffffff;
+}
+
+.btn-secondary {
+    background-color: #222222;
+    border-color: #333333;
+    color: #ffffff;
+}
+
+.btn-secondary:hover {
+    background-color: #333333;
+    border-color: #444444;
+    color: #ffffff;
+}
+
+/* Container customizado com margens maiores */
+.container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 3rem; /* Margens laterais maiores */
+}
+
+/* Responsivo para telas menores */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem 1.5rem; /* Margens menores em mobile */
+    }
+}
+
+/* Animação do spinner */
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+/* Tela de Loading Principal */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.loading-container {
+    text-align: center;
+    max-width: 500px;
+    padding: 2rem;
+    background: rgba(17, 17, 17, 0.95);
+    border: 1px solid #333;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(255, 75, 75, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.loading-logo {
+    font-size: 4rem;
+    color: #ff4b4b;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+}
+
+.loading-title {
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 10px rgba(255, 75, 75, 0.3);
+}
+
+.loading-subtitle {
+    color: #888888;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.loading-progress-container {
+    margin-bottom: 2rem;
+}
+
+.loading-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #222222;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid #333;
+}
+
+.loading-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4b4b, #ff6b6b, #ff8a80);
+    border-radius: 20px;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.loading-progress-fill::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.loading-progress-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ffffff;
+    font-size: 0.9rem;
+}
+
+#loadingProgressPercent {
+    font-weight: 600;
+    color: #ff4b4b;
+}
+
+#loadingProgressStatus {
+    color: #888888;
+}
+
+.loading-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.loading-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(34, 34, 34, 0.5);
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+    opacity: 0.5;
+}
+
+.loading-step.active {
+    opacity: 1;
+    background: rgba(255, 75, 75, 0.1);
+    border-color: #ff4b4b;
+    transform: scale(1.05);
+}
+
+.loading-step.completed {
+    opacity: 1;
+    background: rgba(76, 175, 80, 0.1);
+    border-color: #4caf50;
+}
+
+.loading-step i {
+    font-size: 1.5rem;
+    color: #888888;
+    transition: color 0.3s ease;
+}
+
+.loading-step.active i {
+    color: #ff4b4b;
+    animation: bounce 1s infinite;
+}
+
+.loading-step.completed i {
+    color: #4caf50;
+}
+
+.loading-step span {
+    font-size: 0.8rem;
+    color: #888888;
+    font-weight: 500;
+    text-align: center;
+}
+
+.loading-step.active span {
+    color: #ffffff;
+}
+
+.loading-step.completed span {
+    color: #4caf50;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+/* Fade out da tela de loading */
+.loading-screen.fade-out {
+    animation: fadeOut 0.8s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    to { 
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .loading-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .loading-steps {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .loading-step {
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+    }
+    
+    .loading-title {
+        font-size: 1.5rem;
+    }
+    
+    .loading-logo {
+        font-size: 3rem;
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Força todos os elementos para ultra dark */
+.text-muted {
+    color: #888888 !important;
+}
+
+.text-dark {
+    color: #ffffff !important;
+}
+
+.bg-light {
+    background-color: #222222 !important;
+}
+
+.border-primary {
+    border-color: #ff4b4b !important;
+}
+
+.text-primary {
+    color: #ff4b4b !important;
+}
+
+.text-info {
+    color: #2196f3 !important;
+}
+
+.text-warning {
+    color: #ff9800 !important;
+}
+
+.text-secondary {
+    color: #888888 !important;
+}
+
+.card-body {
+    background-color: inherit;
+}
+
+/* Navbar e outros elementos */
+.navbar {
+    background-color: #000000 !important;
+}
+
+.navbar-brand, .nav-link {
+    color: #ffffff !important;
+}
+
+/* Inputs e selects mais escuros */
+input, select, textarea {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #333333 !important;
+}
+
+/* Tabelas Ultra Dark - Preto 90% - Compactas */
+.table {
+    color: #ffffff;
+    background-color: #1a1a1a !important; /* Preto 90% */
+    font-size: 0.85rem !important; /* Fonte menor */
+}
+
+.table th,
+.table td {
+    background-color: #1a1a1a !important; /* Preto 90% */
+    border-color: #333333 !important;
+    color: #ffffff !important;
+    padding: 0.4rem !important; /* Reduzir padding para linhas menores */
+    line-height: 1.2 !important; /* Altura de linha menor */
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > td,
+.table-striped > tbody > tr:nth-of-type(odd) > th {
+    background-color: #222222 !important; /* Zebra mais escura */
+}
+
+.table thead th {
+    background-color: #0a0a0a !important; /* Header mais escuro */
+    border-bottom: 2px solid #333333 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    padding: 0.5rem !important; /* Header um pouco maior que as células */
+    font-size: 0.9rem !important; /* Header com fonte ligeiramente maior */
+}
+
+/* Força fundo preto em qualquer elemento branco */
+* {
+    color: inherit;
+}
+
+*:not(.text-dark):not(.alert-success):not(.alert-info):not(.alert-warning) {
+    background-color: inherit;
+}
+
+/* Garantir que modais e dropdowns sejam dark */
+.modal-content {
+    background-color: #111111 !important;
+    color: #ffffff !important;
+    border: 1px solid #333333 !important;
+}
+
+.modal-header {
+    background-color: #0a0a0a !important;
+    border-bottom: 1px solid #333333 !important;
+}
+
+.modal-footer {
+    background-color: #0a0a0a !important;
+    border-top: 1px solid #333333 !important;
+}
+
+.dropdown-menu {
+    background-color: #1a1a1a !important;
+    border: 1px solid #333333 !important;
+}
+
+.dropdown-item {
+    color: #ffffff !important;
+}
+
+.dropdown-item:hover {
+    background-color: #ff4b4b !important;
+    color: #ffffff !important;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+
+<!-- Tela de Loading Principal -->
+<div id="loadingScreen" class="loading-screen">
+    <div class="loading-container">
+        <div class="loading-logo">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h2 class="loading-title">Simulador Financeiro</h2>
+        <p class="loading-subtitle">Carregando sistema e filtros...</p>
+        
+        <div class="loading-progress-container">
+            <div class="loading-progress-bar">
+                <div id="loadingProgressFill" class="loading-progress-fill"></div>
+            </div>
+            <div class="loading-progress-text">
+                <span id="loadingProgressPercent">0%</span>
+                <span id="loadingProgressStatus">Iniciando...</span>
+            </div>
+        </div>
+        
+        <div class="loading-steps">
+            <div class="loading-step" id="step1">
+                <i class="fas fa-database"></i>
+                <span>Carregando dados</span>
+            </div>
+            <div class="loading-step" id="step2">
+                <i class="fas fa-filter"></i>
+                <span>Processando filtros</span>
+            </div>
+            <div class="loading-step" id="step3">
+                <i class="fas fa-chart-bar"></i>
+                <span>Preparando interface</span>
+            </div>
+            <div class="loading-step" id="step4">
+                <i class="fas fa-check"></i>
+                <span>Finalizando</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conteúdo Principal -->
+<div id="mainContent" class="container-fluid" style="background: transparent; display: none;">
+    <!-- Header -->
     <div class="row mb-4">
-        <div class="col">
-            <h1 class="display-6 text-white">
-                <i class="bi bi-speedometer2"></i> Dashboard Analítico
-            </h1>
-            <p class="lead text-white-50">Bem-vindo, {{ username }}!</p>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h1><i class="fas fa-chart-line me-2"></i>🚀 Simulador Financeiro - Grandes Litigantes</h1>
+                    <p class="mb-0" style="color: #888888;"><strong>Versão Flask com Polars</strong> - Sistema integrado com metodologia CNJ oficial</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Carregamento -->
+    <!-- Status dos Dados -->
     <div class="row mb-4">
-        <div class="col">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-database"></i> Carregamento de Dados</h5>
-                </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <select class="form-select" id="limitSelect">
-                                <option value="100000">100.000 (Teste Rápido)</option>
-                                <option value="500000">500.000 (Amostra)</option>
-                                <option value="1000000">1.000.000 (Parcial)</option>
-                                <option value="0" selected>TODOS os registros (14M+)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-success" id="btnCarregar">
-                                <i class="bi bi-download"></i> Carregar Dados
-                            </button>
-                        </div>
-                        <div class="col-md-4">
-                            <div id="status" class="alert alert-info d-none"></div>
-                        </div>
-                    </div>
+                    <h3>📊 Status dos Dados</h3>
                     
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="alert alert-warning" id="alertTestData" style="display: none;">
-                                <i class="bi bi-exclamation-triangle"></i>
-                                <strong>Dados de Teste Detectados!</strong>
-                                <p class="mb-2">Você está usando dados de demonstração. Para acessar os dados REAIS dos grandes litigantes:</p>
-                                <button class="btn btn-danger btn-sm" id="btnForceDownload">
-                                    <i class="bi bi-cloud-download"></i> Forçar Download dos Dados Reais (14M+)
-                                </button>
+                    {% if dados_info.carregados %}
+                        <div class="alert alert-success border-0 shadow-sm" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>✅ Dados processados:</strong> {{ "{:,}".format(dados_info.total_registros) }} empresas únicas
+                            <br><small><i class="fas fa-clock me-1"></i>Última atualização: {{ dados_info.timestamp }}</small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info border-0 shadow-sm" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>🚀 Carregando dataset completo automaticamente...</strong> 14M+ registros de processos reais
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Loading Avançado -->
+                    <div id="loadingSpinner" class="loading text-center mt-4">
+                        <div class="card border-primary shadow-lg">
+                            <div class="card-body">
+                                <div class="spinner-border text-primary mb-3" role="status"></div>
+                                <h6 id="loadingTitle">🔄 Carregando dados...</h6>
+                                <p id="loadingStatus" class="text-muted">Processando...</p>
+                                
+                                <!-- Barra de Progresso Detalhada -->
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span id="progressPercent" class="fw-bold text-primary">0%</span>
+                                        <span id="progressDetails" class="text-muted small"></span>
+                                    </div>
+                                    
+                                    <div class="progress" style="height: 20px; border-radius: 10px;">
+                                        <div id="progressBar" 
+                                             class="progress-bar progress-bar-striped progress-bar-animated bg-gradient"
+                                             role="progressbar" 
+                                             style="width: 0%;"
+                                             aria-valuenow="0" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-2 d-flex justify-content-between">
+                                        <small id="progressSpeed" class="text-info">
+                                            <i class="fas fa-tachometer-alt me-1"></i>Velocidade: --
+                                        </small>
+                                        <small id="progressETA" class="text-warning">
+                                            <i class="fas fa-clock me-1"></i>Tempo restante: --
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <small id="progressBytes" class="text-secondary">
+                                            <i class="fas fa-download me-1"></i>--
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -57,40 +681,169 @@
         </div>
     </div>
 
-    <!-- Estatísticas -->
-    <div class="row mb-4" id="stats" style="display: none;">
-        <div class="col-md-6">
-            <div class="stats-card">
-                <div class="stats-number" id="totalRegistros">0</div>
-                <div>Total de Registros</div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="stats-card">
-                <div class="stats-number" id="totalProcessos">0</div>
-                <div>Processos Novos</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Análises -->
-    <div class="row mb-4" id="analises" style="display: none;">
-        <div class="col">
+    <!-- Filtros Avançados -->
+    <div id="filtrosSection" class="row mb-4" style="display: none;">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-graph-up"></i> Análises</h5>
-                </div>
                 <div class="card-body">
-                    <div class="row">
+                    <h3>🎯 Filtros Avançados</h3>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">📊 Ramo:</label>
+                            <select id="filtroRamo" class="form-select" multiple size="4" style="height: 120px;">
+                                <option value="">Todos os ramos</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                            <small class="text-muted">Ctrl/Cmd + clique para múltipla seleção</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">⚖️ Grau:</label>
+                            <select id="filtroGrau" class="form-select" multiple size="4" style="height: 120px;">
+                                <option value="">Todos os graus</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                            <small class="text-muted">Ctrl/Cmd + clique para múltipla seleção</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">🏛️ Tribunal:</label>
+                            <select id="filtroTribunal" class="form-select" multiple size="4" style="height: 120px;">
+                                <option value="">Todos os tribunais</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                            <small class="text-muted">Ctrl/Cmd + clique para múltipla seleção</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">🏭 Segmento:</label>
+                            <select id="filtroSegmento" class="form-select" multiple size="4" style="height: 120px;">
+                                <option value="">Todos os segmentos</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                            <small class="text-muted">Ctrl/Cmd + clique para múltipla seleção</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtros CNAE Hierárquicos -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">📂 Classe CNAE:</label>
+                            <select id="filtroClasseCnae" class="form-select" multiple size="4" style="height: 120px;">
+                                <option value="">Todas as classes</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                            <small class="text-muted">Ctrl/Cmd + clique para múltipla seleção</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">📄 Subclasse CNAE:</label>
+                            <select id="filtroSubclasseCnae" class="form-select" multiple size="4" style="height: 120px;">
+                                <option value="">Todas as subclasses</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                            <small class="text-muted">Ctrl/Cmd + clique para múltipla seleção</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">🏷️ CNAE:</label>
+                            <select id="filtroCnae" class="form-select" multiple size="4" style="height: 120px;">
+                                <option value="">Todos os CNAEs</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                            <small class="text-muted">Ctrl/Cmd + clique para múltipla seleção</small>
+                        </div>
+                        <div class="col-md-3">
+                            <!-- Card de Estatísticas Gerais -->
+                            <div class="card border-info h-100">
+                                <div class="card-header bg-info text-white py-2">
+                                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>📊 Estatísticas Gerais</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    <div class="row g-2 text-center">
+                                        <div class="col-12">
+                                            <div class="border-bottom pb-1 mb-1">
+                                                <small class="text-muted">Total de Empresas</small>
+                                                <div class="h6 mb-0 text-primary">
+                                                    <i class="fas fa-building me-1"></i>
+                                                    <span id="totalEmpresas">--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="border-bottom pb-1 mb-1">
+                                                <small class="text-muted">Processos/Mês Total</small>
+                                                <div class="h6 mb-0 text-success">
+                                                    <i class="fas fa-gavel me-1"></i>
+                                                    <span id="processosMensaisTotal">--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div>
+                                                <small class="text-muted">Mediana Mensal</small>
+                                                <div class="h6 mb-0 text-warning">
+                                                    <i class="fas fa-chart-bar me-1"></i>
+                                                    <span id="medianaMensal">--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">🔍 Buscar Empresa:</label>
+                            <input type="text" id="buscaEmpresa" class="form-control" placeholder="Digite nome da empresa...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">📈 Volume Mín/Mês:</label>
+                            <input type="number" id="volumeMinimo" class="form-control" placeholder="Ex: 100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">📉 Volume Máx/Mês:</label>
+                            <input type="number" id="volumeMaximo" class="form-control" placeholder="Ex: 10000">
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
                         <div class="col-md-6">
-                            <button class="btn btn-primary w-100" id="btnRanking">
-                                <i class="bi bi-trophy"></i> Ranking Empresas
+                            <button id="btnAplicarFiltros" class="btn btn-light w-100">
+                                <i id="iconAplicarFiltros" class="fas fa-search me-2"></i>
+                                <span id="textoAplicarFiltros">🎯 Aplicar Filtros Selecionados</span>
                             </button>
                         </div>
                         <div class="col-md-6">
-                            <button class="btn btn-warning w-100" id="btnSimulacao">
-                                <i class="bi bi-calculator"></i> Simulação Financeira
+                            <button id="btnLimparFiltros" class="btn btn-outline-light w-100">
+                                <i class="fas fa-eraser me-2"></i>🧹 Limpar Filtros
                             </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Informação sobre filtros cascateados -->
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                💡 <strong>Filtros Cascateados:</strong> Quando você seleciona um tribunal, os outros filtros (grau, segmento, etc.) se atualizam automaticamente para mostrar apenas as opções disponíveis para aquele tribunal. 
+                                Use <kbd>Ctrl/Cmd + clique</kbd> para múltipla seleção.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading dos filtros -->
+                    <div id="loadingFiltros" class="row mt-3" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-3" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div>
+                                        <strong>🔍 Aplicando filtros...</strong>
+                                        <br><small id="statusFiltros">Processando critérios de busca...</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -98,28 +851,164 @@
         </div>
     </div>
 
-    <!-- Config Simulação -->
-    <div class="row mb-4" id="configSim" style="display: none;">
-        <div class="col">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-gear"></i> Configurações</h5>
+    <!-- Ranking e Seleção -->
+    <div id="rankingSection" class="row mb-4" style="display: none;">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>🏆 Ranking de Empresas</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
+                    <!-- Controles de seleção -->
+                    <div class="row mb-3">
                         <div class="col-md-4">
-                            <label>Preço por Processo (R$):</label>
-                            <input type="number" class="form-control" id="preco" value="50">
-                        </div>
-                        <div class="col-md-4">
-                            <label>Taxa Conversão (%):</label>
-                            <input type="number" class="form-control" id="conversao" value="5">
-                        </div>
-                        <div class="col-md-4">
-                            <label>&nbsp;</label>
-                            <button class="btn btn-success w-100" id="btnExecSim">
-                                Executar
+                            <button id="btnSelecionarTodas" class="btn btn-success btn-sm w-100">
+                                <i class="fas fa-check-double me-1"></i>✅ Selecionar Todas
                             </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="btnLimparSelecao" class="btn btn-outline-danger btn-sm w-100">
+                                <i class="fas fa-times me-1"></i>❌ Limpar Seleção
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="btnInverterSelecao" class="btn btn-outline-info btn-sm w-100">
+                                <i class="fas fa-exchange-alt me-1"></i>🔄 Inverter
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de empresas com barra de rolagem -->
+                    <div id="listaEmpresas" class="list-group" style="max-height: 400px; overflow-y: auto; border: 1px solid #333; border-radius: 8px;">
+                        <!-- Empresas serão carregadas aqui -->
+                    </div>
+                    
+                    <!-- Informação sobre limite -->
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Mostrando as primeiras 100 empresas para seleção. 
+                            O gráfico de distribuição usa <strong>todas as empresas</strong> encontradas.
+                        </small>
+                    </div>
+                    
+                    <!-- Estatísticas -->
+                    <div id="estatisticasRanking" class="mt-3">
+                        <!-- Estatísticas serão carregadas aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Simulador -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h3>💰 Simulador Financeiro</h3>
+                    
+                    <div id="volumeInfo" class="alert alert-light text-dark mb-3">
+                        <strong>Volume Total:</strong> <span id="volumeTotal">0</span> proc/mês
+                        <br><small id="fonteVolume">Nenhuma empresa selecionada</small>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">💵 Preço por Processo (R$):</label>
+                            <input type="number" id="inputPreco" class="form-control" value="50" step="0.01">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">🏢 Custo Fixo Base (R$):</label>
+                            <input type="number" id="inputCustoBase" class="form-control" value="60000" step="1000">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">👥 Clientes:</label>
+                            <input type="number" id="inputClientes" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">📈 Reinvest. (%):</label>
+                            <input type="number" id="inputReinvestimento" class="form-control" value="30" min="0" max="100">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">🎯 Volume Custom (opcional):</label>
+                            <input type="number" id="inputVolumeCustom" class="form-control" placeholder="Sobrescreve seleção">
+                        </div>
+                    </div>
+                    
+                    <button id="btnSimular" class="btn btn-light w-100 mt-3">
+                        <i class="fas fa-play me-2"></i>🚀 Executar Simulação
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados da Simulação -->
+    <div id="resultadosSection" class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>📊 Resultados da Simulação</h5>
+                </div>
+                <div class="card-body">
+                    <!-- KPIs principais -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h6>💰 Receita Bruta</h6>
+                                    <h4 id="receitaBruta">R$ 0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h6>💸 Custo Total</h6>
+                                    <h4 id="custoTotal">R$ 0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h6>💎 Lucro Líquido</h6>
+                                    <h4 id="lucroLiquido">R$ 0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h6>⚖️ Break Even</h6>
+                                    <h4 id="breakEven">0 proc/mês</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráficos -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="chartVolume"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <canvas id="chartPreco"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Detalhamento -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#detalhamento">
+                                <i class="fas fa-list me-2"></i>📋 Ver Detalhamento Completo
+                            </button>
+                            <div class="collapse mt-3" id="detalhamento">
+                                <div class="card">
+                                    <div class="card-body" id="detalhamentoContent">
+                                        <!-- Detalhes aqui -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -127,222 +1016,2004 @@
         </div>
     </div>
 
-    <!-- Resultados -->
-    <div class="row" id="resultados" style="display: none;">
-        <div class="col">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-bar-chart"></i> Resultados</h5>
+    <!-- Gráfico de Distribuição de Empresas -->
+    <div id="chartDistribuicaoSection" class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header" style="background: linear-gradient(90deg, #000B18 0%, #00172D 50%, #00264D 100%); color: #ffffff; border-bottom: 1px solid #02386E;">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>📊 Distribuição de Empresas por Faixa de Processos/Mês</h5>
                 </div>
-                <div class="card-body" id="conteudo">
+                <div class="card-body" style="background-color: #00172D; color: #ffffff;">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="chartDistribuicaoProcessos" style="background-color: transparent;"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card" style="background-color: #000B18; border: 1px solid #00264D;">
+                                <div class="card-body">
+                                    <h6 class="text-white mb-3">📊 Tabela Comparativa</h6>
+                                    <div id="tabelaComparativa" class="text-white">
+                                        <!-- Tabela será inserida aqui -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="text-center py-5" id="loading" style="display: none;">
-        <div class="spinner-border text-primary"></div>
-        <p class="mt-3 text-white">Processando...</p>
+    <!-- Relatório -->
+    <div id="relatorioSection" class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>📄 Relatório Detalhado</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Opções de Análise -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-white mb-2">
+                                <i class="fas fa-cog me-2"></i>Selecione os tipos de análise:
+                            </h6>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="analisePorPorte" value="porte" checked>
+                                <label class="form-check-label text-white" for="analisePorPorte">
+                                    📏 Por Porte
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="analisePorRamo" value="ramo" checked>
+                                <label class="form-check-label text-white" for="analisePorRamo">
+                                    🌿 Por Ramo
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="analisePorSegmento" value="segmento" checked>
+                                <label class="form-check-label text-white" for="analisePorSegmento">
+                                    📈 Por Segmento
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="analisePorClasse" value="classe" checked>
+                                <label class="form-check-label text-white" for="analisePorClasse">
+                                    📊 Por Classe CNAE
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="analisePorSubclasse" value="subclasse" checked>
+                                <label class="form-check-label text-white" for="analisePorSubclasse">
+                                    🔍 Por Subclasse CNAE
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="btnGerarRelatorio" class="btn btn-primary w-100">
+                        <i class="fas fa-chart-pie me-2"></i>📊 Gerar Análise Selecionada
+                    </button>
+                    
+                    <div id="conteudoRelatorio" class="mt-4">
+                        <!-- Relatório aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
-.stats-card {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    color: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    text-align: center;
+/* Ultra Dark Mode - Items de empresa */
+.empresa-item {
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    padding: 12px;
+    background-color: #1a1a1a !important; /* Preto 90% */
+    border: 1px solid #333333;
+    color: #ffffff !important;
+}
+.empresa-item:hover {
+    background-color: #222222 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 75, 75, 0.15);
+    border-color: #ff4b4b;
+}
+.empresa-selecionada {
+    background-color: #2a0a0a !important; /* Dark red base */
+    border: 2px solid #ff4b4b !important;
+    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.25);
 }
 
-.stats-number {
-    font-size: 2.5rem;
-    font-weight: bold;
+/* Lista de empresas */
+.list-group-item {
+    background-color: #1a1a1a !important;
+    border-color: #333333 !important;
+    color: #ffffff !important;
+}
+.loading { display: none; }
+.badge-empresa { font-size: 0.8em; margin: 2px; }
+
+/* Garantir que botão filtros seja sempre clicável visualmente */
+#btnAplicarFiltros {
+    cursor: pointer !important;
+    opacity: 1 !important;
 }
 
-.card-header {
-    background: linear-gradient(135deg, #2c3e50, #3498db);
-    color: white;
-    border-radius: 15px 15px 0 0 !important;
-}
-
-.table thead th {
-    background: #2c3e50;
-    color: white;
+#btnAplicarFiltros:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 </style>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let dadosOK = false;
+// Variáveis globais
+let dadosCarregados = false;
+let empresasSelecionadas = [];
+let dadosRanking = [];
 
+// Variável para debounce das estatísticas
+let estatisticasTimeout;
+
+// Variável para debounce dos filtros cascateados
+let filtrosCascateadosTimeout;
+
+// Variáveis para controle de execução
+let isUpdatingFilters = false;
+let isUpdatingStats = false;
+
+// Utilitários
 function formatNumber(num) {
     return new Intl.NumberFormat('pt-BR').format(num);
 }
 
 function formatCurrency(num) {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(num);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
 }
 
-$('#btnCarregar').click(function() {
-    const limit = parseInt($('#limitSelect').val());
+// Controle de progresso
+let progressInterval = null;
+let startTime = null;
+
+function mostrarLoading(titulo, status) {
+    $('#loadingTitle').text(titulo);
+    $('#loadingStatus').text(status);
+    $('#loadingSpinner').show();
     
-    $('#loading').show();
+    // Reset progress
+    atualizarProgresso(0, 'Iniciando...', '', '');
+    startTime = new Date();
     
-    if (limit === 0) {
-        $('#status').removeClass('d-none alert-success alert-danger').addClass('alert-info')
-                   .html('<i class="bi bi-hourglass-split"></i> <strong>Carregando TODOS os registros (14M+)...</strong><br>Isso pode demorar alguns minutos!');
-    } else {
-        $('#status').removeClass('d-none alert-success alert-danger').addClass('alert-info')
-                   .text(`Carregando ${limit.toLocaleString('pt-BR')} registros...`);
+    // Reset variável de progresso local
+    if (typeof simularProgressoLocal.currentProgress !== 'undefined') {
+        simularProgressoLocal.currentProgress = 0;
     }
     
+    // Reset estilos
+    $('#progressBar').removeClass('bg-danger').addClass('bg-gradient');
+    
+    // Iniciar monitoramento de progresso
+    iniciarMonitoramentoProgresso();
+}
+
+function ocultarLoading() {
+    $('#loadingSpinner').hide();
+    clearInterval(progressInterval);
+    progressInterval = null;
+}
+
+function atualizarProgresso(percent, details, speed, bytes) {
+    percent = Math.min(100, Math.max(0, percent));
+    
+    $('#progressPercent').text(percent.toFixed(1) + '%');
+    $('#progressDetails').text(details || '');
+    $('#progressSpeed').html(`<i class="fas fa-tachometer-alt me-1"></i>Velocidade: ${speed || '--'}`);
+    $('#progressBytes').html(`<i class="fas fa-download me-1"></i>${bytes || '--'}`);
+    
+    $('#progressBar').css('width', percent + '%').attr('aria-valuenow', percent);
+    
+    // Calcular ETA
+    if (percent > 0 && startTime) {
+        const elapsed = (new Date() - startTime) / 1000; // segundos
+        const totalTime = elapsed / (percent / 100);
+        const remaining = Math.max(0, totalTime - elapsed);
+        
+        let eta = '';
+        if (remaining > 60) {
+            eta = Math.floor(remaining / 60) + 'm ' + Math.floor(remaining % 60) + 's';
+        } else {
+            eta = Math.floor(remaining) + 's';
+        }
+        
+        $('#progressETA').html(`<i class="fas fa-clock me-1"></i>Tempo restante: ${eta}`);
+    }
+}
+
+function iniciarMonitoramentoProgresso() {
+    // Monitorar progresso real do servidor
+    progressInterval = setInterval(() => {
+        $.ajax({
+            url: '/api/progress',
+            method: 'GET',
+            success: function(progress) {
+                if (progress.active) {
+                    // Usar dados reais do servidor
+                    atualizarProgresso(
+                        progress.percent, 
+                        progress.details, 
+                        progress.speed, 
+                        progress.bytes
+                    );
+                    
+                    // Atualizar status principal
+                    $('#loadingStatus').text(progress.status);
+                    
+                    // Se concluído, parar monitoramento
+                    if (progress.percent >= 100) {
+                        setTimeout(() => {
+                            clearInterval(progressInterval);
+                        }, 1000);
+                    }
+                } else {
+                    // Fallback: simular progresso suave quando servidor não reporta
+                    simularProgressoLocal();
+                }
+            },
+            error: function() {
+                // Em caso de erro, usar simulação local
+                simularProgressoLocal();
+            }
+        });
+    }, 800); // Verificar a cada 800ms
+}
+
+function simularProgressoLocal() {
+    // Função de fallback para simular progresso
+    if (typeof simularProgressoLocal.currentProgress === 'undefined') {
+        simularProgressoLocal.currentProgress = 0;
+    }
+    
+    const increment = Math.random() * 2 + 0.5;
+    simularProgressoLocal.currentProgress = Math.min(95, simularProgressoLocal.currentProgress + increment);
+    
+    let details = '';
+    let speed = '';
+    let bytes = '';
+    
+    const progress = simularProgressoLocal.currentProgress;
+    
+    if (progress < 20) {
+        details = 'Conectando ao servidor...';
+        speed = 'Preparando';
+    } else if (progress < 40) {
+        details = 'Baixando dados do Google Drive...';
+        speed = Math.floor(Math.random() * 5 + 2) + ' MB/s';
+        bytes = Math.floor(progress * 2.4) + ' MB / 237 MB';
+    } else if (progress < 70) {
+        details = 'Processando registros...';
+        speed = Math.floor(Math.random() * 10000 + 5000).toLocaleString() + ' reg/s';
+    } else if (progress < 90) {
+        details = 'Agrupando por CNPJ...';
+        speed = 'Otimizando';
+    } else {
+        details = 'Finalizando...';
+        speed = 'Quase pronto';
+    }
+    
+    atualizarProgresso(progress, details, speed, bytes);
+    
+    if (progress >= 95) {
+        clearInterval(progressInterval);
+    }
+}
+
+// Carregamento de dados
+function carregarDados(limite) {
+    const titulos = {
+        0: '👑 Carregando dataset COMPLETO (14M+ registros)'
+    };
+    
+    mostrarLoading(titulos[limite] || '🔄 Carregando dados...', 'Iniciando processamento...');
+
     $.ajax({
         url: '/api/carregar-dados',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({limit: limit}),
+        data: JSON.stringify({limite: limite}),
         success: function(resp) {
             if (resp.success) {
-                dadosOK = true;
-                $('#totalRegistros').text(formatNumber(resp.stats.total_registros));
-                $('#totalProcessos').text(formatNumber(resp.stats.total_processos));
-                $('#stats').show();
-                $('#analises').show();
+                // Finalizar progresso
+                atualizarProgresso(100, 'Concluído!', 'Sucesso', `${formatNumber(resp.stats.total_registros)} registros`);
                 
-                if (resp.stats.is_demo) {
-                    $('#status').removeClass('alert-info').addClass('alert-warning')
-                             .html('<i class="bi bi-info-circle"></i> <strong>Dados de Demonstração carregados!</strong><br>Os dados reais serão baixados automaticamente quando a conexão permitir.');
-                    $('#alertTestData').show();
-                } else {
-                    const totalRecords = resp.stats.total_registros;
-                    $('#alertTestData').hide();
-                    if (totalRecords >= 1000000) {
-                        $('#status').removeClass('alert-info').addClass('alert-success')
-                                   .html(`<i class="bi bi-check-circle"></i> <strong>TODOS os dados reais carregados!</strong><br>${totalRecords.toLocaleString('pt-BR')} registros completos`);
-                    } else {
-                        $('#status').removeClass('alert-info').addClass('alert-success')
-                                   .text(`Dados reais carregados: ${totalRecords.toLocaleString('pt-BR')} registros`);
-                    }
-                }
+                setTimeout(() => {
+                    dadosCarregados = true;
+                    $('#filtrosSection, #rankingSection, #relatorioSection, #chartDistribuicaoSection').show();
+                    carregarFiltros();
+                    carregarRanking();
+                    carregarGraficoDistribuicao();
+                    
+                    // Carregar estatísticas iniciais
+                    atualizarEstatisticasGerais();
+                    
+                    const isDemo = resp.stats.is_demo ? ' (demonstração)' : ' (dados reais)';
+                    $('.alert').removeClass('alert-info').addClass('alert-success')
+                              .html(`<i class="fas fa-check-circle me-2"></i><strong>✅ Sucesso!</strong> ${formatNumber(resp.stats.total_registros)} linhas processadas${isDemo}`);
+                }, 1000);
             }
         },
         error: function(xhr) {
-            $('#status').removeClass('alert-info').addClass('alert-danger').text('Erro: ' + (xhr.responseJSON?.error || 'Falha'));
+            // Mostrar erro no progresso
+            atualizarProgresso(0, 'Erro no carregamento', 'Falhou', '');
+            $('#progressBar').removeClass('bg-gradient').addClass('bg-danger');
+            
+            setTimeout(() => {
+                $('.alert').removeClass('alert-info').addClass('alert-danger')
+                          .html(`<i class="fas fa-exclamation-circle me-2"></i><strong>❌ Erro:</strong> ${xhr.responseJSON?.error || 'Falha no carregamento'}`);
+            }, 1000);
         },
         complete: function() {
-            $('#loading').hide();
+            setTimeout(() => {
+                ocultarLoading();
+            }, 2000); // Dar tempo para ver o resultado
         }
     });
-});
+}
 
-$('#btnRanking').click(function() {
-    if (!dadosOK) { alert('Carregue os dados primeiro!'); return; }
+// Filtros
+let filtrosIniciais = {}; // Armazenar filtros iniciais
+let filtrosSelecionados = {}; // Armazenar seleções atuais
+
+function carregarFiltros() {
+    $.ajax({
+        url: '/api/filtros',
+        method: 'GET',
+        success: function(response) {
+            
+            if (response.success && response.filtros) {
+                filtrosIniciais = response.filtros;
+                
+                // Carregar filtros iniciais sem valores selecionados
+                renderizarFiltros(response.filtros);
+                
+                // Configurar listeners para filtros cascateados
+                configurarListenersFiltros();
+                
+                console.log('🎯 Filtros carregados - sistema cascateado ativo');
+            } else {
+                console.error('❌ Erro na resposta da API filtros:', response);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Erro na requisição de filtros:', error);
+        }
+    });
+}
+
+function renderizarFiltros(filtros) {
+    // Tribunais
+    if (filtros.tribunais && filtros.tribunais.length > 0) {
+        const opcoesHtml = '<option value="">Todos os tribunais</option>' + 
+            filtros.tribunais.map(t => `<option value="${t}">${t}</option>`).join('');
+        $('#filtroTribunal').html(opcoesHtml);
+    }
     
-    $('#loading').show();
+    // Graus
+    if (filtros.graus && filtros.graus.length > 0) {
+        const opcoesHtml = '<option value="">Todos os graus</option>' + 
+            filtros.graus.map(g => `<option value="${g}">${g}</option>`).join('');
+        $('#filtroGrau').html(opcoesHtml);
+    }
+    
+    // Segmentos
+    if (filtros.segmentos && filtros.segmentos.length > 0) {
+        const opcoesHtml = '<option value="">Todos os segmentos</option>' + 
+            filtros.segmentos.map(s => `<option value="${s}">${s}</option>`).join('');
+        $('#filtroSegmento').html(opcoesHtml);
+    }
+    
+    // Ramos
+    if (filtros.ramos && filtros.ramos.length > 0) {
+        const opcoesHtml = '<option value="">Todos os ramos</option>' + 
+            filtros.ramos.map(r => `<option value="${r}">${r}</option>`).join('');
+        $('#filtroRamo').html(opcoesHtml);
+    }
+    
+    // CNAEs - carregar inicialmente todos
+    if (filtros.cnaes && filtros.cnaes.length > 0) {
+        renderizarCnaes(filtros.cnaes);
+    } else {
+        carregarTodosCnaes();
+    }
+}
+
+function configurarListenersFiltros() {
+    // Remover listeners antigos para evitar duplicação
+    $('#filtroTribunal, #filtroGrau, #filtroSegmento, #filtroRamo, #filtroCnae, #filtroClasseCnae, #filtroSubclasseCnae').off('change.cascata');
+    
+    // Adicionar listeners para atualização cascateada
+    $('#filtroTribunal, #filtroGrau, #filtroSegmento, #filtroRamo, #filtroCnae, #filtroClasseCnae, #filtroSubclasseCnae').on('change.cascata', function() {
+        atualizarFiltrosCascateados();
+    });
+}
+
+function atualizarFiltrosCascateados() {
+    // Evitar múltiplas execuções simultâneas
+    if (isUpdatingFilters) {
+        return;
+    }
+    
+    // Debounce para evitar múltiplas chamadas
+    clearTimeout(filtrosCascateadosTimeout);
+    filtrosCascateadosTimeout = setTimeout(function() {
+        isUpdatingFilters = true;
+        
+        // Obter seleções atuais usando a função existente
+        const filtrosSelecionadosAtuais = obterFiltrosAtuais();
+        
+        // Extrair apenas os filtros principais para comparação (usar plural)
+        const filtrosComparacao = {
+            tribunais: filtrosSelecionadosAtuais.tribunais,
+            graus: filtrosSelecionadosAtuais.graus,
+            segmentos: filtrosSelecionadosAtuais.segmentos,
+            ramos: filtrosSelecionadosAtuais.ramos,
+            cnaes: filtrosSelecionadosAtuais.cnaes
+        };
+        
+        // Só atualizar se houver mudança
+        if (JSON.stringify(filtrosSelecionados) === JSON.stringify(filtrosComparacao)) {
+            isUpdatingFilters = false;
+            return;
+        }
+        
+        filtrosSelecionados = filtrosComparacao;
+        
+        console.log('🔄 Atualizando filtros cascateados...', filtrosSelecionados);
+        
+        // Buscar filtros disponíveis baseados nas seleções
+        $.ajax({
+            url: '/api/filtros-disponiveis',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({filtros: filtrosSelecionados}),
+            success: function(response) {
+                if (response.success && response.filtros_disponiveis) {
+                    atualizarOpcoesDisponiveis(response.filtros_disponiveis);
+                    
+                    // Mostrar informação sobre registros disponíveis
+                    if (response.total_registros !== undefined) {
+                        mostrarInfoRegistrosDisponiveis(response.total_registros);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Erro ao atualizar filtros cascateados:', error);
+            },
+            complete: function() {
+                isUpdatingFilters = false;
+            }
+        });
+        
+        // Atualizar estatísticas gerais apenas se não estiver já atualizando
+        if (!isUpdatingStats) {
+            atualizarEstatisticasGerais();
+        }
+    }, 300); // Aumentar debounce para 300ms
+}
+
+function atualizarOpcoesDisponiveis(filtrosDisponiveis) {
+    // Salvar valores selecionados (agora são arrays)
+    const valoresTribunal = $('#filtroTribunal').val() || [];
+    const valoresGrau = $('#filtroGrau').val() || [];
+    const valoresSegmento = $('#filtroSegmento').val() || [];
+    const valoresRamo = $('#filtroRamo').val() || [];
+    const valoresCnae = $('#filtroCnae').val() || [];
+    const valoresClasseCnae = $('#filtroClasseCnae').val() || [];
+    const valoresSubclasseCnae = $('#filtroSubclasseCnae').val() || [];
+    
+    // Remover listeners temporariamente para evitar loops
+    $('#filtroTribunal, #filtroGrau, #filtroSegmento, #filtroRamo, #filtroCnae, #filtroClasseCnae, #filtroSubclasseCnae').off('change.cascata');
+    
+    // Função auxiliar para atualizar select com múltipla seleção
+    function atualizarSelectMultiplo(selector, opcoes, valoresAnteriores, labelTodos) {
+        const opcoesHtml = `<option value="">${labelTodos}</option>` + 
+            opcoes.map(opcao => `<option value="${opcao}">${opcao}</option>`).join('');
+        $(selector).html(opcoesHtml);
+        
+        // Restaurar seleções anteriores que ainda estão disponíveis
+        const valoresDisponiveis = valoresAnteriores.filter(valor => 
+            valor === '' || opcoes.includes(valor)
+        );
+        
+        if (valoresDisponiveis.length > 0) {
+            $(selector).val(valoresDisponiveis);
+        }
+    }
+    
+    // Atualizar Tribunais (usar 'tribunais' no plural)
+    if (filtrosDisponiveis.tribunais) {
+        atualizarSelectMultiplo('#filtroTribunal', filtrosDisponiveis.tribunais, valoresTribunal, 'Todos os tribunais');
+    }
+    
+    // Atualizar Graus (usar 'graus' no plural)
+    if (filtrosDisponiveis.graus) {
+        atualizarSelectMultiplo('#filtroGrau', filtrosDisponiveis.graus, valoresGrau, 'Todos os graus');
+    }
+    
+    // Atualizar Segmentos (usar 'segmentos' no plural)
+    if (filtrosDisponiveis.segmentos) {
+        atualizarSelectMultiplo('#filtroSegmento', filtrosDisponiveis.segmentos, valoresSegmento, 'Todos os segmentos');
+    }
+    
+    // Atualizar Ramos (usar 'ramos' no plural)
+    if (filtrosDisponiveis.ramos) {
+        atualizarSelectMultiplo('#filtroRamo', filtrosDisponiveis.ramos, valoresRamo, 'Todos os ramos');
+    }
+    
+    // Atualizar Classes CNAE
+    if (filtrosDisponiveis.classes_cnae) {
+        const classesOpcoes = filtrosDisponiveis.classes_cnae.map(c => c.nome);
+        atualizarSelectMultiplo('#filtroClasseCnae', classesOpcoes, valoresClasseCnae, 'Todas as classes');
+    }
+    
+    // Atualizar Subclasses CNAE
+    if (filtrosDisponiveis.subclasses_cnae) {
+        const subclassesOpcoes = filtrosDisponiveis.subclasses_cnae.map(s => s.nome);
+        atualizarSelectMultiplo('#filtroSubclasseCnae', subclassesOpcoes, valoresSubclasseCnae, 'Todas as subclasses');
+    }
+    
+    // Atualizar CNAEs (usar 'cnaes' no plural)
+    if (filtrosDisponiveis.cnaes) {
+        renderizarCnaes(filtrosDisponiveis.cnaes);
+        
+        // Tentar manter seleções de CNAE que ainda estão disponíveis
+        if (valoresCnae && valoresCnae.length > 0) {
+            const cnaesDisponiveis = [];
+            
+            // Função para extrair CNAEs disponíveis da estrutura
+            function extrairCnaesDisponiveis(cnaes) {
+                const lista = [];
+                cnaes.forEach(item => {
+                    if (item.classe && item.subclasses) {
+                        // Estrutura hierárquica
+                        item.subclasses.forEach(sub => lista.push(sub.cnae));
+                    } else if (item.cnae) {
+                        // Estrutura simples
+                        lista.push(item.cnae);
+                    }
+                });
+                return lista;
+            }
+            
+            const todosOsCnaes = extrairCnaesDisponiveis(filtrosDisponiveis.cnaes);
+            const cnaesParaManter = valoresCnae.filter(cnae => 
+                cnae === '' || todosOsCnaes.includes(cnae)
+            );
+            
+            if (cnaesParaManter.length > 0) {
+                $('#filtroCnae').val(cnaesParaManter);
+            }
+        }
+    }
+    
+    // Restaurar listeners
+    setTimeout(() => {
+        configurarListenersFiltros();
+    }, 100);
+}
+
+function mostrarInfoRegistrosDisponiveis(totalRegistros) {
+    // Mostrar informação discreta sobre registros disponíveis
+    let infoHtml = `<small class="text-muted">📊 ${formatNumber(totalRegistros)} registro${totalRegistros !== 1 ? 's' : ''} disponível${totalRegistros !== 1 ? 'eis' : ''}</small>`;
+    
+    // Remover informação anterior se existir
+    $('#infoRegistrosDisponiveis').remove();
+    
+    // Adicionar nova informação
+    $('#btnAplicarFiltros').closest('.col-md-6').append(`<div id="infoRegistrosDisponiveis" class="mt-2 text-center">${infoHtml}</div>`);
+}
+
+// Função otimizada para renderizar CNAEs
+function renderizarCnaes(cnaes) {
+    const $filtroCnae = $('#filtroCnae');
+    
+    // Evitar renderização desnecessária
+    if (!Array.isArray(cnaes) || cnaes.length === 0) {
+        $filtroCnae.html('<option value="">Todos os CNAEs</option>');
+        return;
+    }
+    
+    // Usar requestAnimationFrame para operações DOM pesadas
+    requestAnimationFrame(function() {
+        // Criar fragmento de documento para melhor performance
+        const fragment = document.createDocumentFragment();
+        
+        // Opção padrão
+        const optionDefault = document.createElement('option');
+        optionDefault.value = '';
+        optionDefault.textContent = 'Todos os CNAEs';
+        fragment.appendChild(optionDefault);
+        
+        // Verificar se é estrutura hierárquica (classes)
+        if (cnaes[0].classe && cnaes[0].subclasses) {
+            // Log apenas uma vez para reduzir spam no console
+            if (cnaes.length !== window.lastCnaeCount) {
+                console.log(`🏷️ Renderizando ${cnaes.length} classes hierárquicas`);
+                window.lastCnaeCount = cnaes.length;
+            }
+            
+            // Estrutura hierárquica: Classe → Subclasses
+            cnaes.forEach(classe => {
+                // Cabeçalho da classe (optgroup)
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = `📂 ${classe.classe} (${formatNumber(classe.total_registros)} registros)`;
+                
+                // Subclasses dentro da classe
+                if (classe.subclasses && Array.isArray(classe.subclasses)) {
+                    classe.subclasses.forEach(subclasse => {
+                        const cnae = subclasse.cnae;
+                        const nome = subclasse.nome;
+                        const registros = subclasse.registros;
+                        
+                        // Limitar tamanho do nome para visualização
+                        const nomeEncurtado = nome.length > 50 ? nome.substring(0, 47) + '...' : nome;
+                        
+                        const option = document.createElement('option');
+                        option.value = cnae;
+                        option.textContent = `   ${cnae} - ${nomeEncurtado} (${formatNumber(registros)})`;
+                        optgroup.appendChild(option);
+                    });
+                }
+                
+                fragment.appendChild(optgroup);
+            });
+        } else {
+            // Estrutura simples (lista de CNAEs)
+            if (cnaes.length !== window.lastCnaeCount) {
+                console.log(`🏷️ Renderizando ${cnaes.length} CNAEs simples`);
+                window.lastCnaeCount = cnaes.length;
+            }
+            
+            cnaes.forEach(cnaeObj => {
+                const cnae = cnaeObj.cnae;
+                const nome = cnaeObj.nome || `CNAE ${cnae}`;
+                const registros = cnaeObj.registros;
+                
+                // Limitar tamanho do nome
+                const nomeEncurtado = nome.length > 50 ? nome.substring(0, 47) + '...' : nome;
+                
+                const option = document.createElement('option');
+                option.value = cnae;
+                option.textContent = `${cnae} - ${nomeEncurtado} (${formatNumber(registros)})`;
+                fragment.appendChild(option);
+            });
+        }
+        
+        // Limpar e adicionar todas as opções de uma vez
+        $filtroCnae[0].innerHTML = '';
+        $filtroCnae[0].appendChild(fragment);
+    });
+}
+
+// Função otimizada para atualizar estatísticas gerais
+function atualizarEstatisticasGerais() {
+    // Evitar múltiplas execuções simultâneas
+    if (isUpdatingStats) {
+        return;
+    }
+    
+    // Debounce para evitar múltiplas chamadas
+    clearTimeout(estatisticasTimeout);
+    estatisticasTimeout = setTimeout(function() {
+        isUpdatingStats = true;
+        
+        const filtros = obterFiltrosAtuais();
+        
+        $.ajax({
+            url: '/api/estatisticas-gerais',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({filtros: filtros}),
+            success: function(response) {
+                if (response.success && response.estatisticas) {
+                    const stats = response.estatisticas;
+                    
+                    // Usar requestAnimationFrame para atualizações DOM
+                    requestAnimationFrame(function() {
+                        $('#totalEmpresas').text(formatNumber(stats.total_empresas));
+                        $('#processosMensaisTotal').text(formatNumber(stats.processos_mensais_total));
+                        $('#medianaMensal').text(formatNumber(stats.mediana_mensal));
+                    });
+                    
+                    console.log('📊 Estatísticas atualizadas:', stats);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Erro ao atualizar estatísticas gerais:', error);
+                
+                // Mostrar valores de erro
+                requestAnimationFrame(function() {
+                    $('#totalEmpresas').text('--');
+                    $('#processosMensaisTotal').text('--');
+                    $('#medianaMensal').text('--');
+                });
+            },
+            complete: function() {
+                isUpdatingStats = false;
+            }
+        });
+    }, 400); // Aumentar debounce para 400ms
+}
+
+// Função para carregar todos os CNAEs disponíveis
+function carregarTodosCnaes() {
+    const $filtroCnae = $('#filtroCnae');
+    
+    // Mostrar loading no campo CNAE
+    $filtroCnae.html('<option value="">🔄 Carregando CNAEs...</option>');
+    
+    // Buscar todos os CNAEs da API (sem segmento específico)
+    $.ajax({
+        url: '/api/cnaes/todos',
+        method: 'GET',
+        success: function(response) {
+            if (response.success) {
+                // Usar nova função de renderização
+                if (response.classes && Array.isArray(response.classes)) {
+                    renderizarCnaes(response.classes);
+                } else if (response.cnaes && Array.isArray(response.cnaes)) {
+                    renderizarCnaes(response.cnaes);
+                } else {
+                    console.warn('⚠️ Resposta da API não contém estrutura esperada:', response);
+                    $filtroCnae.html('<option value="">❌ Formato de dados inválido</option>');
+                }
+            } else {
+                $filtroCnae.html('<option value="">❌ Erro ao carregar CNAEs</option>');
+                console.error('❌ Erro na resposta da API CNAEs:', response);
+            }
+        },
+        error: function(xhr, status, error) {
+            $filtroCnae.html('<option value="">❌ Erro ao carregar CNAEs</option>');
+            console.error('❌ Erro na requisição de CNAEs:', error);
+        }
+    });
+}
+
+function obterFiltrosAtuais() {
+    // Função auxiliar para obter array de valores selecionados
+    function obterValoresSelecionados(selector) {
+        const values = $(selector).val();
+        if (!values) return [];
+        
+        // Se é array (múltipla seleção)
+        if (Array.isArray(values)) {
+            return values.filter(v => v && v.trim() !== '');
+        }
+        
+        // Se é string única (seleção única ou valor único)
+        if (values && values.trim() !== '') {
+            return [values];
+        }
+        
+        return [];
+    }
+    
+    return {
+        tribunais: obterValoresSelecionados('#filtroTribunal'),
+        graus: obterValoresSelecionados('#filtroGrau'),
+        segmentos: obterValoresSelecionados('#filtroSegmento'),
+        ramos: obterValoresSelecionados('#filtroRamo'),
+        cnaes: obterValoresSelecionados('#filtroCnae'),
+        classes_cnae: obterValoresSelecionados('#filtroClasseCnae'),
+        subclasses_cnae: obterValoresSelecionados('#filtroSubclasseCnae'),
+        busca_empresa: $('#buscaEmpresa').val(),
+        volume_minimo: parseInt($('#volumeMinimo').val()) || null,
+        volume_maximo: parseInt($('#volumeMaximo').val()) || null
+    };
+}
+
+// Ranking
+function carregarRanking() {
+    const filtros = obterFiltrosAtuais();
+    
+    // Mostrar feedback visual
+    mostrarLoadingFiltros();
     
     $.ajax({
         url: '/api/ranking',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({}),
+        data: JSON.stringify({filtros: filtros}),
         success: function(resp) {
-            if (resp.success) {
-                let html = '<h6>🏆 Top 20 Empresas</h6>';
-                html += '<table class="table table-striped">';
-                html += '<thead><tr><th>Pos</th><th>Empresa</th><th>Processos</th></tr></thead><tbody>';
+            if (resp.ranking) {
+                dadosRanking = resp.ranking;
+                renderizarRanking(resp.ranking);
+                renderizarEstatisticas(resp.estatisticas);
                 
-                resp.ranking.forEach(function(item) {
-                    html += `<tr><td>${item.posicao}</td><td>${item.empresa}</td><td>${formatNumber(item.processos)}</td></tr>`;
-                });
+                // Usar dados completos para distribuição
+                if (resp.ranking_completo) {
+                    processarDadosDistribuicao(resp.ranking_completo, resp.estatisticas);
+                    $('#chartDistribuicaoSection').show();
+                }
                 
-                html += '</tbody></table>';
-                $('#conteudo').html(html);
-                $('#resultados').show();
+                // Mostrar feedback de sucesso
+                mostrarSucessoFiltros(resp.ranking.length);
             }
         },
-        complete: function() { $('#loading').hide(); }
+        error: function() {
+            mostrarErroFiltros();
+        },
+        complete: function() {
+            // Ocultar loading após 500ms
+            setTimeout(ocultarLoadingFiltros, 500);
+        }
     });
-});
+}
 
-$('#btnSimulacao').click(function() {
-    if (!dadosOK) { alert('Carregue os dados primeiro!'); return; }
-    $('#configSim').show();
-});
-
-$('#btnExecSim').click(function() {
-    const preco = parseFloat($('#preco').val());
-    const conversao = parseFloat($('#conversao').val());
+function renderizarRanking(ranking) {
+    let html = '';
     
-    $('#loading').show();
+    ranking.forEach((empresa, index) => {
+        // Normalizar nome (API retorna 'empresa', não 'nome')
+        const nomeEmpresa = empresa.empresa || empresa.nome || 'Empresa não identificada';
+        const processos = empresa.processos || empresa.volume_mensal || 0;
+        
+        const isSelected = empresasSelecionadas.includes(nomeEmpresa);
+        const selectedClass = isSelected ? 'empresa-selecionada' : '';
+        
+        html += `
+            <div class="list-group-item empresa-item ${selectedClass}" data-empresa="${nomeEmpresa}">
+                <div class="row align-items-center">
+                    <div class="col-1">
+                        <input type="checkbox" class="form-check-input empresa-checkbox" ${isSelected ? 'checked' : ''}>
+                    </div>
+                    <div class="col-1">
+                        <span class="badge bg-primary">#${empresa.posicao || (index + 1)}</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>${nomeEmpresa.substring(0, 50)}${nomeEmpresa.length > 50 ? '...' : ''}</strong>
+                        <br><small class="text-muted">📊 ${formatNumber(processos)} processos</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <strong class="text-primary">${formatNumber(Math.round(processos / 12))}</strong>
+                            <br><small>proc/mês</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    $('#listaEmpresas').html(html);
+    
+    // Event listeners
+    $('.empresa-checkbox').change(function() {
+        const nomeEmpresa = $(this).closest('.empresa-item').data('empresa');
+        toggleEmpresaSelecao(nomeEmpresa);
+    });
+    
+    $('.empresa-item').click(function(e) {
+        if (e.target.type !== 'checkbox') {
+            const checkbox = $(this).find('.empresa-checkbox');
+            checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+        }
+    });
+}
+
+function renderizarEstatisticas(stats) {
+    // Debug da estrutura de dados
+    
+    
+    // Garantir valores padrão se campos não existirem
+    const totalEmpresas = stats?.total_empresas || 0;
+    const volumeTotalMensal = stats?.volume_total_mensal || 0;
+    const volumeMedioMensal = stats?.volume_medio_mensal || 0;
+    
+    const html = `
+        <div class="alert alert-info">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <strong>${formatNumber(totalEmpresas)}</strong><br><small>Empresas Encontradas</small>
+                </div>
+                <div class="col-md-3">
+                    <strong>${formatNumber(volumeTotalMensal)}</strong><br><small>Volume Total/Mês</small>
+                </div>
+                <div class="col-md-3">
+                    <strong>${formatNumber(volumeMedioMensal)}</strong><br><small>Volume Médio/Mês</small>
+                </div>
+                <div class="col-md-3">
+                    <strong>${formatNumber(empresasSelecionadas.length)}</strong><br><small>Empresas Selecionadas</small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#estatisticasRanking').html(html);
+}
+
+// Seleção
+function toggleEmpresaSelecao(nomeEmpresa) {
+    const index = empresasSelecionadas.indexOf(nomeEmpresa);
+    
+    if (index > -1) {
+        empresasSelecionadas.splice(index, 1);
+    } else {
+        empresasSelecionadas.push(nomeEmpresa);
+    }
+    
+    atualizarInterfaceSelecao();
+}
+
+function atualizarInterfaceSelecao() {
+    $('.empresa-item').each(function() {
+        const nomeEmpresa = $(this).data('empresa');
+        const isSelected = empresasSelecionadas.includes(nomeEmpresa);
+        
+        $(this).toggleClass('empresa-selecionada', isSelected);
+        $(this).find('.empresa-checkbox').prop('checked', isSelected);
+    });
+    
+    let volumeTotal = 0;
+    empresasSelecionadas.forEach(nome => {
+        const empresa = dadosRanking.find(e => e.nome === nome);
+        if (empresa) volumeTotal += empresa.volume_mensal;
+    });
+    
+    $('#volumeTotal').text(formatNumber(volumeTotal));
+    $('#fonteVolume').text(empresasSelecionadas.length > 0 ? `${empresasSelecionadas.length} empresas selecionadas` : 'Nenhuma empresa selecionada');
+}
+
+// Simulação
+function executarSimulacao() {
+    const volumeCustom = parseInt($('#inputVolumeCustom').val()) || null;
+    
+    if (!volumeCustom && empresasSelecionadas.length === 0) {
+        alert('❌ Selecione empresas ou digite um volume customizado!');
+        return;
+    }
+    
+    const parametros = {
+        empresas_selecionadas: empresasSelecionadas,
+        volume_customizado: volumeCustom,
+        preco: parseFloat($('#inputPreco').val()),
+        custo_base: parseInt($('#inputCustoBase').val()),
+        clientes: parseInt($('#inputClientes').val()),
+        reinvestimento: parseFloat($('#inputReinvestimento').val())
+    };
+    
+    mostrarLoading('💰 Executando simulação...', 'Calculando cenários...');
     
     $.ajax({
         url: '/api/simulacao',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({preco: preco, conversao: conversao}),
+        data: JSON.stringify(parametros),
         success: function(resp) {
-            if (resp.success) {
-                let html = `<h6>💰 Simulação (R$ ${preco}/proc, ${conversao}%)</h6>`;
-                html += '<table class="table table-striped">';
-                html += '<thead><tr><th>Empresa</th><th>Processos</th><th>Clientes</th><th>Receita/Mês</th></tr></thead><tbody>';
-                
-                resp.simulacao.forEach(function(item) {
-                    html += `<tr>
-                        <td>${item.empresa}</td>
-                        <td>${formatNumber(item.processos)}</td>
-                        <td>${formatNumber(item.clientes_potenciais)}</td>
-                        <td>${formatCurrency(item.receita_mensal)}</td>
-                    </tr>`;
-                });
-                
-                html += '</tbody></table>';
-                $('#conteudo').html(html);
-                $('#resultados').show();
-            }
+            renderizarResultados(resp);
+            $('#resultadosSection').show();
         },
-        complete: function() { $('#loading').hide(); }
+        error: function(xhr) {
+            alert('❌ Erro: ' + (xhr.responseJSON?.error || 'Falha'));
+        },
+        complete: function() {
+            ocultarLoading();
+        }
+    });
+}
+
+function renderizarResultados(dados) {
+    const r = dados.resultados;
+    
+    $('#receitaBruta').text(formatCurrency(r.receita_bruta));
+    $('#custoTotal').text(formatCurrency(r.custo_total));
+    $('#lucroLiquido').text(formatCurrency(r.lucro_liquido));
+    $('#breakEven').text(formatNumber(dados.break_even) + ' proc/mês');
+    
+    // Gráficos
+    renderizarGraficoVolume(dados.sensibilidade.volume);
+    renderizarGraficoPreco(dados.sensibilidade.preco);
+    
+    // Detalhamento
+    const detalhamento = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>💰 Receitas:</h6>
+                <ul><li>Receita Bruta: ${formatCurrency(r.receita_bruta)}</li></ul>
+                <h6>💸 Custos:</h6>
+                <ul>
+                    <li>Custo Base: ${formatCurrency(r.custo_base)}</li>
+                    <li>Custo Progressivo: ${formatCurrency(r.custo_progressivo)}</li>
+                    <li>Custo Relacionamento: ${formatCurrency(r.custo_relacionamento)}</li>
+                    <li>Custo Operacional: ${formatCurrency(r.custo_operacional)}</li>
+                    <li><strong>Total: ${formatCurrency(r.custo_total)}</strong></li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>📊 Lucros:</h6>
+                <ul>
+                    <li>Impostos: ${formatCurrency(r.impostos)}</li>
+                    <li>Lucro Bruto: ${formatCurrency(r.lucro_bruto)}</li>
+                    <li>Lucro Líquido: ${formatCurrency(r.lucro_liquido)}</li>
+                    <li>Margem: ${r.margem_liquida.toFixed(1)}%</li>
+                </ul>
+                <h6>🎯 Distribuição:</h6>
+                <ul>
+                    <li>Reinvestimento: ${formatCurrency(r.valor_reinvestimento)}</li>
+                    <li>Distribuição: ${formatCurrency(r.valor_distribuicao)}</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    $('#detalhamentoContent').html(detalhamento);
+}
+
+function renderizarGraficoVolume(dados) {
+    const ctx = document.getElementById('chartVolume').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dados.map(d => formatNumber(d.volume)),
+            datasets: [{
+                label: 'Lucro Líquido',
+                data: dados.map(d => d.lucro_liquido),
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { title: { display: true, text: '📈 Sensibilidade ao Volume' } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+function renderizarGraficoPreco(dados) {
+    const ctx = document.getElementById('chartPreco').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dados.map(d => 'R$ ' + d.preco),
+            datasets: [{
+                label: 'Lucro Líquido',
+                data: dados.map(d => d.lucro_liquido),
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { title: { display: true, text: '💰 Sensibilidade ao Preço' } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+// Event listeners otimizados
+$(document).ready(function() {
+    // REMOVIDO: carregamento automático - agora controlado pela tela de loading
+    // O carregamento será iniciado pela nova tela de loading
+    
+    // Debounce para evitar múltiplas chamadas
+    let filtroTimeout;
+    
+    $('#btnAplicarFiltros').click(function(e) {
+        e.preventDefault();
+        
+        // Verificar se botão está habilitado
+        if ($(this).prop('disabled')) {
+            return false;
+        }
+        
+        // Debounce para evitar múltiplas chamadas simultâneas
+        clearTimeout(filtroTimeout);
+        filtroTimeout = setTimeout(function() {
+            // Atualizar todos os visuais com os filtros aplicados
+            carregarRanking();
+            carregarGraficoDistribuicao();
+            atualizarEstatisticasGerais();
+        }, 100);
+    });
+    
+    $('#btnLimparFiltros').click(function() {
+        // Limpar valores dos filtros
+        $('#filtroTribunal, #filtroGrau, #filtroSegmento, #filtroRamo, #filtroCnae').val('');
+        $('#buscaEmpresa, #volumeMinimo, #volumeMaximo').val('');
+        
+        // Resetar controle de filtros cascateados
+        filtrosSelecionados = {};
+        
+        // Usar requestAnimationFrame para operações DOM pesadas
+        requestAnimationFrame(function() {
+            // Restaurar filtros iniciais completos
+            renderizarFiltros(filtrosIniciais);
+            
+            // Reconfigurar listeners
+            configurarListenersFiltros();
+            
+            // Remover informação de registros disponíveis
+            $('#infoRegistrosDisponiveis').remove();
+            
+            // Recarregar todos os visuais sem filtros
+            setTimeout(function() {
+                carregarRanking();
+                carregarGraficoDistribuicao();
+                atualizarEstatisticasGerais();
+            }, 50);
+        });
+        
+        console.log('🧹 Filtros limpos e restaurados ao estado inicial');
+    });
+    
+    // Otimizar seleção de empresas
+    $('#btnSelecionarTodas').click(function() {
+        requestAnimationFrame(function() {
+            empresasSelecionadas = dadosRanking.map(e => e.nome);
+            atualizarInterfaceSelecao();
+        });
+    });
+    
+    $('#btnLimparSelecao').click(function() {
+        requestAnimationFrame(function() {
+            empresasSelecionadas = [];
+            atualizarInterfaceSelecao();
+        });
+    });
+    
+    $('#btnInverterSelecao').click(function() {
+        requestAnimationFrame(function() {
+            const todasEmpresas = dadosRanking.map(e => e.nome);
+            empresasSelecionadas = todasEmpresas.filter(e => !empresasSelecionadas.includes(e));
+            atualizarInterfaceSelecao();
+        });
+    });
+    
+    $('#btnSimular').click(executarSimulacao);
+    
+    $('#btnGerarRelatorio').click(function() {
+        const filtros = obterFiltrosAtuais();
+        const tiposAnalise = obterTiposAnaliseSelecionados();
+        
+        if (tiposAnalise.length === 0) {
+            $('#conteudoRelatorio').html(`
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Selecione pelo menos um tipo de análise.
+                </div>
+            `);
+            return;
+        }
+        
+        // Mostrar loading
+        $('#conteudoRelatorio').html(`
+            <div class="alert alert-info">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                Gerando análise...
+            </div>
+        `);
+        
+        $.ajax({
+            url: '/api/relatorio-detalhado',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({filtros: filtros}),
+            success: function(resp) {
+                let html = '';
+                
+                // Análise por Porte
+                if (tiposAnalise.includes('porte') && resp.porte && resp.porte.length > 0) {
+                    html += gerarTabelaAnalise('📏 Análise por Porte de Empresas', resp.porte, 'faixa');
+                }
+                
+                // Análise por Ramo
+                if (tiposAnalise.includes('ramo') && resp.ramo && resp.ramo.length > 0) {
+                    html += gerarTabelaAnalise('🌿 Análise por Ramo Jurídico', resp.ramo, 'ramo');
+                }
+                
+                // Análise por Segmento
+                if (tiposAnalise.includes('segmento') && resp.segmento && resp.segmento.length > 0) {
+                    html += gerarTabelaAnalise('📈 Análise por Segmento de Mercado', resp.segmento, 'segmento');
+                }
+                
+                // Análise por Classe CNAE
+                if (tiposAnalise.includes('classe') && resp.cnae_classes && resp.cnae_classes.length > 0) {
+                    html += gerarTabelaAnaliseClasse('📊 Análise por Classe CNAE', resp.cnae_classes);
+                }
+                
+                // Análise por Subclasse CNAE
+                if (tiposAnalise.includes('subclasse') && resp.cnae_subclasses && resp.cnae_subclasses.length > 0) {
+                    html += gerarTabelaAnaliseSubclasse('🔍 Análise por Subclasse CNAE', resp.cnae_subclasses);
+                }
+                
+                if (html === '') {
+                    html = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Nenhum dado encontrado para os filtros e tipos de análise selecionados.
+                        </div>
+                    `;
+                }
+                
+                $('#conteudoRelatorio').html(html);
+            },
+            error: function(xhr, status, error) {
+                $('#conteudoRelatorio').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erro ao gerar análise: ${error}
+                    </div>
+                `);
+            }
+        });
     });
 });
 
-// Botão para forçar download dos dados reais
-$('#btnForceDownload').click(function() {
-    if (confirm('⚠️ ATENÇÃO!\n\nEste processo irá:\n• Baixar 14+ milhões de registros\n• Pode demorar vários minutos\n• Requer conexão estável\n\nDeseja continuar?')) {
+// Funções auxiliares para análise
+function obterTiposAnaliseSelecionados() {
+    const tipos = [];
+    
+    if ($('#analisePorPorte').is(':checked')) tipos.push('porte');
+    if ($('#analisePorRamo').is(':checked')) tipos.push('ramo');
+    if ($('#analisePorSegmento').is(':checked')) tipos.push('segmento');
+    if ($('#analisePorClasse').is(':checked')) tipos.push('classe');
+    if ($('#analisePorSubclasse').is(':checked')) tipos.push('subclasse');
+    
+    return tipos;
+}
+
+function gerarTabelaAnalise(titulo, dados, campoNome) {
+    let html = `
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header bg-secondary">
+                <h6 class="mb-0 text-white">${titulo}</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th class="text-center">Qtd. Empresas</th>
+                                <th class="text-center">Volume Total/Mês</th>
+                                <th class="text-center">Volume Médio/Mês</th>
+                                <th class="text-center">% Empresas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    
+    const totalEmpresas = dados.reduce((sum, item) => sum + item.quantidade, 0);
+    
+    dados.forEach(item => {
+        const percentual = ((item.quantidade / totalEmpresas) * 100).toFixed(1);
+        const categoria = item[campoNome] || 'N/A';
         
-        $('#loading').show();
-        $('#alertTestData').hide();
-        $('#status').removeClass('d-none alert-success alert-danger').addClass('alert-info')
-                   .html('<i class="bi bi-cloud-download"></i> <strong>Forçando download dos dados REAIS...</strong><br>Conectando ao Google Drive...');
+        html += `
+            <tr>
+                <td><strong>${categoria}</strong></td>
+                <td class="text-center">${formatNumber(item.quantidade)}</td>
+                <td class="text-center">${formatNumber(item.volume_total)}</td>
+                <td class="text-center">${formatNumber(item.volume_medio)}</td>
+                <td class="text-center">
+                    <span class="badge bg-primary">${percentual}%</span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th><strong>TOTAL</strong></th>
+                                <th class="text-center"><strong>${formatNumber(totalEmpresas)}</strong></th>
+                                <th class="text-center"><strong>${formatNumber(dados.reduce((sum, item) => sum + item.volume_total, 0))}</strong></th>
+                                <th class="text-center">-</th>
+                                <th class="text-center"><strong>100%</strong></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+function gerarTabelaAnaliseClasse(titulo, dados) {
+    let html = `
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header bg-secondary">
+                <h6 class="mb-0 text-white">${titulo}</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Classe CNAE</th>
+                                <th class="text-center">Qtd. Empresas</th>
+                                <th class="text-center">Volume Total/Mês</th>
+                                <th class="text-center">Volume Médio/Mês</th>
+                                <th class="text-center">% Empresas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    
+    const totalEmpresas = dados.reduce((sum, item) => sum + item.quantidade, 0);
+    
+    dados.forEach(item => {
+        const percentual = ((item.quantidade / totalEmpresas) * 100).toFixed(1);
         
-        // Forçar download removendo cache e solicitando todos os registros
-        $.ajax({
-            url: '/api/force-download',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({}),
-            success: function(resp) {
-                if (resp.success) {
-                    // Recarregar dados automaticamente
-                    setTimeout(() => {
-                        $('#limitSelect').val(0);  // Selecionar TODOS
-                        $('#btnCarregar').click(); // Clicar em carregar
-                    }, 1000);
+        html += `
+            <tr>
+                <td><span class="badge bg-info">${item.codigo_classe || 'N/A'}</span></td>
+                <td><strong>${item.classe}</strong></td>
+                <td class="text-center">${formatNumber(item.quantidade)}</td>
+                <td class="text-center">${formatNumber(item.volume_total)}</td>
+                <td class="text-center">${formatNumber(item.volume_medio)}</td>
+                <td class="text-center">
+                    <span class="badge bg-primary">${percentual}%</span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th>-</th>
+                                <th><strong>TOTAL</strong></th>
+                                <th class="text-center"><strong>${formatNumber(totalEmpresas)}</strong></th>
+                                <th class="text-center"><strong>${formatNumber(dados.reduce((sum, item) => sum + item.volume_total, 0))}</strong></th>
+                                <th class="text-center">-</th>
+                                <th class="text-center"><strong>100%</strong></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+function gerarTabelaAnaliseSubclasse(titulo, dados) {
+    let html = `
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header bg-secondary">
+                <h6 class="mb-0 text-white">${titulo} (Top 20)</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Código Sub</th>
+                                <th>Subclasse CNAE</th>
+                                <th>Classe Pai</th>
+                                <th class="text-center">Qtd. Empresas</th>
+                                <th class="text-center">Volume Total/Mês</th>
+                                <th class="text-center">% Empresas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    
+    const totalEmpresas = dados.reduce((sum, item) => sum + item.quantidade, 0);
+    
+    dados.forEach(item => {
+        const percentual = ((item.quantidade / totalEmpresas) * 100).toFixed(1);
+        
+        html += `
+            <tr>
+                <td><span class="badge bg-warning text-dark">${item.codigo_subclasse || 'N/A'}</span></td>
+                <td><strong>${item.subclasse}</strong></td>
+                <td><small class="text-muted">${item.classe_pai}</small></td>
+                <td class="text-center">${formatNumber(item.quantidade)}</td>
+                <td class="text-center">${formatNumber(item.volume_total)}</td>
+                <td class="text-center">
+                    <span class="badge bg-primary">${percentual}%</span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th>-</th>
+                                <th><strong>TOTAL (Top 20)</strong></th>
+                                <th>-</th>
+                                <th class="text-center"><strong>${formatNumber(totalEmpresas)}</strong></th>
+                                <th class="text-center"><strong>${formatNumber(dados.reduce((sum, item) => sum + item.volume_total, 0))}</strong></th>
+                                <th class="text-center"><strong>100%*</strong></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    *Percentual calculado sobre as 20 subclasses mais relevantes.
+                </small>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+// Funções de feedback dos filtros
+function mostrarLoadingFiltros() {
+    $('#btnAplicarFiltros').prop('disabled', true)
+                          .html('<i class="fas fa-spinner fa-spin me-2"></i>Aplicando...');
+    
+    // Criar e mostrar barra de progresso
+    const progressHtml = `
+        <div id="filtrosProgressBar" class="mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <small class="text-muted">
+                    <i class="fas fa-filter me-1"></i>Processando filtros...
+                </small>
+                <small class="text-muted">
+                    <span id="filtrosProgressPercent">0%</span>
+                </small>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div id="filtrosProgressBarFill" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Adicionar progress bar antes das estatísticas
+    $('#estatisticasRanking').html(`
+        <div class="alert alert-warning">
+            <i class="fas fa-spinner fa-spin me-2"></i>Carregando dados...
+            ${progressHtml}
+        </div>
+    `);
+    
+    // Mostrar loading na lista de empresas
+    $('#listaEmpresas').html(`
+        <div class="list-group-item text-center">
+            <i class="fas fa-spinner fa-spin me-2"></i>Carregando empresas...
+        </div>
+    `);
+    
+    // Iniciar animação da barra de progresso
+    iniciarProgressoFiltros();
+}
+
+function iniciarProgressoFiltros() {
+    let progresso = 0;
+    const intervalo = setInterval(() => {
+        progresso += Math.random() * 15 + 5; // Incremento entre 5-20%
+        progresso = Math.min(progresso, 90); // Não passar de 90% até completar
+        
+        $('#filtrosProgressBarFill').css('width', progresso + '%').attr('aria-valuenow', progresso);
+        $('#filtrosProgressPercent').text(Math.round(progresso) + '%');
+        
+        if (progresso >= 90) {
+            clearInterval(intervalo);
+        }
+    }, 200); // Atualizar a cada 200ms
+    
+    // Armazenar referência do intervalo para poder parar depois
+    window.filtrosProgressInterval = intervalo;
+}
+
+function completarProgressoFiltros() {
+    // Completar a barra rapidamente
+    $('#filtrosProgressBarFill').css('width', '100%').attr('aria-valuenow', 100);
+    $('#filtrosProgressPercent').text('100%');
+    
+    // Mudar cor para sucesso
+    setTimeout(() => {
+        $('#filtrosProgressBarFill').removeClass('bg-primary').addClass('bg-success');
+    }, 300);
+    
+    // Parar intervalo se ainda estiver rodando
+    if (window.filtrosProgressInterval) {
+        clearInterval(window.filtrosProgressInterval);
+        window.filtrosProgressInterval = null;
+    }
+}
+
+function mostrarSucessoFiltros(quantidadeEmpresas) {
+    // Completar progresso primeiro
+    completarProgressoFiltros();
+    
+    // Feedback visual de sucesso
+    const btn = $('#btnAplicarFiltros');
+    btn.removeClass('btn-primary').addClass('btn-success')
+       .html('<i class="fas fa-check me-2"></i>✅ Aplicado!');
+    
+    // Mostrar informação de sucesso na barra de progresso
+    setTimeout(() => {
+        $('#filtrosProgressBar small').first().html(`
+            <i class="fas fa-check me-1"></i>Filtros aplicados com sucesso!
+        `);
+    }, 500);
+    
+    setTimeout(() => {
+        btn.removeClass('btn-success').addClass('btn-primary')
+           .html('<i class="fas fa-filter me-2"></i>🔍 Aplicar Filtros');
+    }, 2000);
+}
+
+function mostrarErroFiltros() {
+    // Parar progresso e mostrar erro
+    if (window.filtrosProgressInterval) {
+        clearInterval(window.filtrosProgressInterval);
+        window.filtrosProgressInterval = null;
+    }
+    
+    // Mudar barra para vermelho
+    $('#filtrosProgressBarFill').removeClass('bg-primary').addClass('bg-danger');
+    $('#filtrosProgressBar small').first().html(`
+        <i class="fas fa-exclamation-triangle me-1"></i>Erro ao processar filtros
+    `);
+    
+    $('#estatisticasRanking').html(`
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>Erro ao carregar dados. Tente novamente.
+        </div>
+    `);
+    
+    const btn = $('#btnAplicarFiltros');
+    btn.removeClass('btn-primary').addClass('btn-danger')
+       .html('<i class="fas fa-times me-2"></i>❌ Erro!');
+    
+    setTimeout(() => {
+        btn.removeClass('btn-danger').addClass('btn-primary')
+           .html('<i class="fas fa-filter me-2"></i>🔍 Aplicar Filtros');
+    }, 3000);
+}
+
+// Função para carregar gráfico de distribuição de empresas
+let chartDistribuicao = null;
+
+function carregarGraficoDistribuicao() {
+    const filtros = obterFiltrosAtuais();
+    
+    $.ajax({
+        url: '/api/ranking',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({filtros: filtros}), // Removido limite - controlado no backend
+        success: function(resp) {
+            if (resp.ranking_completo && resp.ranking_completo.length > 0) {
+                processarDadosDistribuicao(resp.ranking_completo, resp.estatisticas);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Erro ao carregar dados para gráfico:', error);
+        }
+    });
+}
+
+function processarDadosDistribuicao(ranking, estatisticas) {
+    // Calcular processos por mês para cada empresa
+    const processosPorMes = ranking.map(emp => {
+        const processos = emp.processos || emp.volume_mensal || 0;
+        return Math.round(processos / 12); // Converter anual para mensal
+    });
+    
+    // Definir todas as faixas (incluindo 0 proc/mês)
+    const todasFaixas = [
+        { label: '0 proc/mês', min: 0, max: 0, cor: '#2a2a2a' },
+        { label: '1-10 proc/mês', min: 1, max: 10, cor: '#4a4a4a' },
+        { label: '11-50 proc/mês', min: 11, max: 50, cor: '#00264D' },
+        { label: '51-100 proc/mês', min: 51, max: 100, cor: '#02386E' },
+        { label: '101-500 proc/mês', min: 101, max: 500, cor: '#005299' },
+        { label: '501-1000 proc/mês', min: 501, max: 1000, cor: '#0066CC' },
+        { label: '1001-5000 proc/mês', min: 1001, max: 5000, cor: '#3385FF' },
+        { label: '5000+ proc/mês', min: 5001, max: Infinity, cor: '#66A3FF' }
+    ];
+    
+    // Faixas para o gráfico (sem 0 e sem 1-10)
+    const faixasGrafico = todasFaixas.slice(2); // Remove 0 e 1-10
+    
+    // USAR SEMPRE O TOTAL DE EMPRESAS DOS DADOS RECEBIDOS (não das estatísticas)
+    const totalEmpresas = ranking.length; // Total real recebido
+    
+    // Calcular volume total de processos
+    const volumeTotal = processosPorMes.reduce((a, b) => a + b, 0);
+    
+    // Contar empresas e volume por faixa (todas as faixas)
+    const distribuicaoCompleta = todasFaixas.map(faixa => {
+        const empresasNaFaixa = processosPorMes.filter(p => p >= faixa.min && p <= faixa.max);
+        const count = empresasNaFaixa.length;
+        const volume = empresasNaFaixa.reduce((a, b) => a + b, 0);
+        
+        return {
+            label: faixa.label,
+            count: count,
+            volume: volume,
+            percentage: ((count / totalEmpresas) * 100).toFixed(1),
+            volumePercentage: volumeTotal > 0 ? ((volume / volumeTotal) * 100).toFixed(1) : 0,
+            cor: faixa.cor
+        };
+    });
+    
+    // Verificar se soma 100% e ajustar se necessário
+    const somaPercentuais = distribuicaoCompleta.reduce((soma, faixa) => soma + parseFloat(faixa.percentage), 0);
+    
+    // Se não soma 100%, ajustar o último item para garantir que some
+    if (Math.abs(somaPercentuais - 100) > 0.1) {
+        const diferenca = 100 - somaPercentuais;
+        
+        // Encontrar a faixa com maior quantidade para ajustar
+        const maiorFaixa = distribuicaoCompleta.reduce((prev, current) => 
+            (current.count > prev.count) ? current : prev
+        );
+        
+        const novoPercentual = parseFloat(maiorFaixa.percentage) + diferenca;
+        maiorFaixa.percentage = novoPercentual.toFixed(1);
+    }
+    
+    // Distribuição apenas para o gráfico (sem 0 e sem 1-10)
+    const distribuicaoGrafico = distribuicaoCompleta.slice(2);
+    const mediaProcessos = processosPorMes.length > 0 ? 
+        Math.round(processosPorMes.reduce((a, b) => a + b, 0) / processosPorMes.length) : 0;
+    
+    const faixaMaisComum = distribuicaoGrafico.reduce((prev, current) => 
+        (current.count > prev.count) ? current : prev
+    );
+    
+    const top10Percent = Math.ceil(totalEmpresas * 0.1);
+    const processosSorted = [...processosPorMes].sort((a, b) => b - a);
+    const top10PercentualProcessos = processosSorted.slice(0, top10Percent);
+    const percentualTop10 = top10PercentualProcessos.length > 0 ? 
+        ((top10PercentualProcessos.reduce((a, b) => a + b, 0) / volumeTotal) * 100).toFixed(1) : 0;
+    
+    // Renderizar gráfico (sem faixas 0 e 1-10)
+    renderizarGraficoDistribuicao(distribuicaoGrafico);
+    
+    // Renderizar tabela comparativa (todas as faixas)
+    renderizarTabelaComparativa(distribuicaoCompleta);
+}
+
+function renderizarGraficoDistribuicao(distribuicao) {
+    const ctx = document.getElementById('chartDistribuicaoProcessos');
+    if (!ctx) return;
+    
+    // Destruir gráfico anterior se existir
+    if (chartDistribuicao) {
+        chartDistribuicao.destroy();
+    }
+    
+    const labels = distribuicao.map(d => d.label);
+    const dados = distribuicao.map(d => d.count);
+    const cores = distribuicao.map(d => d.cor);
+    const percentuais = distribuicao.map(d => d.percentage + '%');
+    
+    chartDistribuicao = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Quantidade de Empresas',
+                data: dados,
+                backgroundColor: cores,
+                borderColor: cores.map(cor => cor + 'CC'), // Adicionar transparência à borda
+                borderWidth: 1,
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '📊 Distribuição de Empresas por Volume de Processos/Mês',
+                    color: '#ffffff',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#000B18',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#00264D',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const count = dados[index];
+                            const percentage = percentuais[index];
+                            return [
+                                `Empresas: ${formatNumber(count)}`,
+                                `Percentual: ${percentage}`,
+                                `Faixa: ${labels[index]}`
+                            ];
+                        }
+                    }
                 }
             },
-            error: function(xhr) {
-                $('#status').removeClass('alert-info').addClass('alert-danger')
-                           .text('Erro no download forçado: ' + (xhr.responseJSON?.error || 'Falha'));
-                $('#alertTestData').show();
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff',
+                        maxRotation: 45,
+                        font: { size: 10 }
+                    },
+                    grid: {
+                        color: '#00264D',
+                        borderColor: '#02386E'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#ffffff',
+                        callback: function(value) {
+                            return formatNumber(value);
+                        }
+                    },
+                    grid: {
+                        color: '#00264D',
+                        borderColor: '#02386E'
+                    }
+                }
             },
-            complete: function() {
-                $('#loading').hide();
+            elements: {
+                bar: {
+                    borderRadius: 4
+                }
             }
-        });
-    }
+        }
+    });
+    
+    // Ajustar altura do canvas
+    ctx.style.height = '400px';
+}
+
+function renderizarTabelaComparativa(distribuicaoCompleta) {
+    let tabelaHtml = `
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; background-color: #1a1a1a; border-radius: 8px;">
+            <table class="table table-sm table-dark mb-0" style="font-size: 0.85rem; background-color: #1a1a1a;">
+                <thead>
+                    <tr style="background-color: #0a0a0a; position: sticky; top: 0; z-index: 10;">
+                        <th class="text-white" style="border: 1px solid #333333; padding: 10px; font-weight: 600;">Faixa</th>
+                        <th class="text-white text-center" style="border: 1px solid #333333; padding: 10px; font-weight: 600;">Qtd</th>
+                        <th class="text-white text-center" style="border: 1px solid #333333; padding: 10px; font-weight: 600;">% Emp</th>
+                        <th class="text-white text-center" style="border: 1px solid #333333; padding: 10px; font-weight: 600;">% Vol</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    distribuicaoCompleta.forEach((faixa, index) => {
+        const isExcluida = faixa.label === '0 proc/mês' || faixa.label === '1-10 proc/mês';
+        const rowClass = isExcluida ? 'text-muted' : 'text-white';
+        const bgColor = index % 2 === 0 ? '#1a1a1a' : '#222222';
+        const finalBgColor = isExcluida ? '#2a2a2a' : bgColor;
+        
+        tabelaHtml += `
+            <tr style="background-color: ${finalBgColor};">
+                <td class="${rowClass}" style="border: 1px solid #333333; padding: 8px; font-size: 0.85rem;">
+                    <span style="display: inline-block; width: 14px; height: 14px; background-color: ${faixa.cor}; margin-right: 8px; border-radius: 3px;"></span>
+                    ${faixa.label}
+                    ${isExcluida ? '<br><small style="color: #888; font-size: 0.7rem; font-style: italic;">*Excluída do gráfico</small>' : ''}
+                </td>
+                <td class="${rowClass} text-center" style="border: 1px solid #333333; padding: 8px; font-weight: ${isExcluida ? 'normal' : '600'};">
+                    ${formatNumber(faixa.count)}
+                </td>
+                <td class="${rowClass} text-center" style="border: 1px solid #333333; padding: 8px;">
+                    ${faixa.percentage}%
+                </td>
+                <td class="${rowClass} text-center" style="border: 1px solid #333333; padding: 8px;">
+                    ${faixa.volumePercentage}%
+                </td>
+            </tr>
+        `;
+    });
+    
+    tabelaHtml += `
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3 p-2" style="background-color: #000B18; border-radius: 6px; border: 1px solid #00264D;">
+            <small class="text-muted" style="font-size: 0.75rem;">
+                <strong class="text-white">📝 Legenda:</strong><br>
+                <span class="text-white">Qtd</span> = Quantidade de empresas<br>
+                <span class="text-white">% Emp</span> = Percentual de empresas<br>
+                <span class="text-white">% Vol</span> = Percentual da volumetria processual
+            </small>
+        </div>
+    `;
+    
+    $('#tabelaComparativa').html(tabelaHtml);
+}
+
+function ocultarLoadingFiltros() {
+    // Completar barra de progresso primeiro
+    completarProgressoFiltros();
+    
+    // Aguardar um pouco para mostrar o progresso completo
+    setTimeout(() => {
+        $('#btnAplicarFiltros').prop('disabled', false)
+                              .html('<i class="fas fa-filter me-2"></i>🔍 Aplicar Filtros');
+    }, 800);
+}
+
+// Sistema de Loading Principal
+let loadingProgressInterval;
+let currentLoadingStep = 0;
+let loadingSteps = [
+    { id: 'step1', title: 'Carregando dados', progress: 0 },
+    { id: 'step2', title: 'Processando filtros', progress: 40 },
+    { id: 'step3', title: 'Preparando interface', progress: 70 },
+    { id: 'step4', title: 'Finalizando', progress: 90 }
+];
+
+function updateLoadingProgress(percent, status) {
+    // Atualizar percentual
+    $('#loadingProgressPercent').text(percent + '%');
+    $('#loadingProgressStatus').text(status);
+    $('#loadingProgressFill').css('width', percent + '%');
+    
+    // Atualizar etapas
+    const currentStep = getCurrentStep(percent);
+    
+    // Atualizar classes das etapas
+    loadingSteps.forEach((step, index) => {
+        const stepElement = $('#' + step.id);
+        stepElement.removeClass('active completed');
+        
+        if (index < currentStep) {
+            stepElement.addClass('completed');
+        } else if (index === currentStep) {
+            stepElement.addClass('active');
+        }
+    });
+}
+
+function getCurrentStep(percent) {
+    if (percent < 25) return 0;
+    if (percent < 50) return 1;
+    if (percent < 80) return 2;
+    return 3;
+}
+
+function hideLoadingScreen() {
+    // Completar todas as etapas
+    updateLoadingProgress(100, 'Concluído!');
+    
+    // Marcar última etapa como completa
+    $('.loading-step').removeClass('active').addClass('completed');
+    
+    setTimeout(() => {
+        // Fade out da tela de loading
+        $('#loadingScreen').addClass('fade-out');
+        
+        setTimeout(() => {
+            $('#loadingScreen').hide();
+            $('#mainContent').show().css('opacity', '0').animate({opacity: 1}, 500);
+        }, 800);
+    }, 1000);
+}
+
+// Modificar função carregarDados para usar nova tela de loading
+function carregarDados(limite) {
+    updateLoadingProgress(5, 'Conectando ao servidor...');
+    
+    $.ajax({
+        url: '/api/carregar-dados',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({limite: limite}),
+        success: function(resp) {
+            if (resp.success) {
+                updateLoadingProgress(30, 'Dados carregados, processando filtros...');
+                
+                setTimeout(() => {
+                    dadosCarregados = true;
+                    $('#filtrosSection, #rankingSection, #relatorioSection, #chartDistribuicaoSection').show();
+                    
+                    // Carregar filtros com progresso
+                    carregarFiltrosComProgresso();
+                    
+                    carregarRanking();
+                    carregarGraficoDistribuicao();
+                    atualizarEstatisticasGerais();
+                    
+                    const isDemo = resp.stats.is_demo ? ' (demonstração)' : ' (dados reais)';
+                    $('.alert').removeClass('alert-info').addClass('alert-success')
+                              .html(`<i class="fas fa-check-circle me-2"></i><strong>✅ Sucesso!</strong> ${formatNumber(resp.stats.total_registros)} linhas processadas${isDemo}`);
+                }, 500);
+            }
+        },
+        error: function(xhr) {
+            updateLoadingProgress(0, 'Erro no carregamento');
+            setTimeout(() => {
+                $('.alert').removeClass('alert-info').addClass('alert-danger')
+                          .html(`<i class="fas fa-exclamation-circle me-2"></i><strong>❌ Erro:</strong> ${xhr.responseJSON?.error || 'Falha no carregamento'}`);
+                hideLoadingScreen();
+            }, 1000);
+        }
+    });
+}
+
+// Nova função carregarFiltros com progresso
+function carregarFiltrosComProgresso() {
+    updateLoadingProgress(50, 'Carregando opções de filtros...');
+    
+    $.ajax({
+        url: '/api/filtros',
+        method: 'GET',
+        success: function(response) {
+            updateLoadingProgress(70, 'Renderizando filtros...');
+            
+            if (response.success && response.filtros) {
+                filtrosIniciais = response.filtros;
+                
+                setTimeout(() => {
+                    renderizarFiltros(response.filtros);
+                    updateLoadingProgress(85, 'Configurando filtros cascateados...');
+                    
+                    setTimeout(() => {
+                        configurarListenersFiltros();
+                        updateLoadingProgress(95, 'Habilitando botão Aplicar Filtros...');
+                        
+                        setTimeout(() => {
+                            // Habilitar botão de aplicar filtros
+                            $('#btnAplicarFiltros').prop('disabled', false);
+                            hideLoadingScreen();
+                            console.log('🎯 Filtros carregados - sistema cascateado ativo');
+                        }, 300);
+                    }, 300);
+                }, 300);
+            } else {
+                console.error('❌ Erro na resposta da API filtros:', response);
+                hideLoadingScreen();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Erro na requisição de filtros:', error);
+            updateLoadingProgress(0, 'Erro ao carregar filtros');
+            hideLoadingScreen();
+        }
+    });
+}
+
+// Inicialização automática quando a página carrega
+$(document).ready(function() {
+    // Desabilitar botão aplicar filtros inicialmente
+    $('#btnAplicarFiltros').prop('disabled', true);
+    
+    // Iniciar carregamento automático após um pequeno delay para mostrar a tela
+    setTimeout(() => {
+        carregarDados(0); // Carregar todos os dados
+    }, 500);
 });
+
 </script>
+</div> <!-- Fim do mainContent -->
+
 {% endblock %} 

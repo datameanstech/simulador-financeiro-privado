@@ -19,7 +19,7 @@
                                 <i class="bi bi-person"></i> Usuário
                             </label>
                             <input type="text" class="form-control" id="username" name="username" 
-                                   placeholder="Digite seu usuário" required>
+                                   placeholder="Digite seu usuário" autocomplete="username" required>
                         </div>
                         
                         <div class="mb-4">
@@ -27,7 +27,7 @@
                                 <i class="bi bi-lock"></i> Senha
                             </label>
                             <input type="password" class="form-control" id="password" name="password" 
-                                   placeholder="Digite sua senha" required>
+                                   placeholder="Digite sua senha" autocomplete="current-password" required>
                         </div>
                         
                         <div class="d-grid">
@@ -45,7 +45,7 @@
                 </div>
             </div>
             
-            <div class="card mt-4 bg-light">
+            <div class="card mt-4">
                 <div class="card-body text-center py-3">
                     <h6 class="card-title mb-2">
                         <i class="bi bi-key"></i> Credenciais de Demonstração
@@ -67,34 +67,38 @@
 </div>
 
 <style>
-.card-header {
-    background: linear-gradient(135deg, #2c3e50, #3498db);
-    color: white;
-    border-radius: 15px 15px 0 0 !important;
-}
-
+/* Ultra Dark Login Styles */
 .form-control {
-    border-radius: 10px;
-    border: 2px solid #e9ecef;
-    padding: 0.7rem 1rem;
-    transition: all 0.3s ease;
+    border-radius: 4px !important;
+    border: 1px solid #333333 !important;
+    padding: 0.7rem 1rem !important;
+    transition: all 0.3s ease !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
 }
 
 .form-control:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    border-color: #ff4b4b !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 75, 75, 0.25) !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+}
+
+.form-control::placeholder {
+    color: #666666 !important;
 }
 
 .btn-primary {
-    padding: 0.7rem 2rem;
-    font-weight: 600;
+    padding: 0.7rem 2rem !important;
+    font-weight: 400 !important;
 }
 
-code {
-    background-color: #f8f9fa;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    color: #2c3e50;
+.card-title {
+    color: #ffffff !important;
+}
+
+h6 {
+    color: #ffffff !important;
 }
 </style>
 {% endblock %} 

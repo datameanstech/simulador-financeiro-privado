@@ -330,7 +330,7 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
                     
                     try:
                         # Estratégia 1: Lazy loading com streaming
-                        df_lazy = pl.scan_parquet(arquivo_path)
+                    df_lazy = pl.scan_parquet(arquivo_path)
                         
                         # Verificar quantas linhas existem primeiro
                         total_rows = df_lazy.select(pl.len()).collect().item()
@@ -366,8 +366,8 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
                             st.warning(f"💪 Processando TODOS os {total_rows:,} registros...")
                             st.info("☕ Isso pode demorar 10+ minutos. Aguarde...")
                             with st.spinner("🔄 Carregando dataset completo..."):
-                                df = df_lazy.collect(streaming=True)
-                        else:
+                    df = df_lazy.collect(streaming=True)
+                else:
                             st.info(f"⚡ Processando {n_registros:,} registros selecionados...")
                             st.info("⏳ Carregamento em andamento...")
                             with st.spinner(f"📊 Carregando {n_registros:,} registros..."):
@@ -385,7 +385,7 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
                         
                         # Fallback: carregar diretamente sem lazy loading
                         st.info("🔄 Tentando carregamento direto...")
-                        df = pl.read_parquet(arquivo_path)
+                    df = pl.read_parquet(arquivo_path)
                         st.success(f"✅ Arquivo carregado (fallback direto): {len(df):,} registros")
                         
                 else:
@@ -405,7 +405,7 @@ def carregar_dados_grandes(arquivo_path: str) -> pl.DataFrame:
                 except Exception as final_error:
                     st.error(f"❌ Não foi possível carregar o arquivo: {final_error}")
                     st.info("💡 Tente a opção 'Upload de arquivo' ou 'Dados simulados'")
-                    return pl.DataFrame()
+                return pl.DataFrame()
         
         # CSV: Fallback para arquivos antigos
         else:
@@ -1091,13 +1091,13 @@ def main():
             # OPÇÃO 2: Caminho manual
             with st.sidebar.expander("📝 Caminho personalizado"):
                 caminho = st.text_input(
-                    "Caminho do arquivo:",
-                    value="grandes_litigantes_202504.parquet"
-                )
-                if caminho and Path(caminho).exists():
+                "Caminho do arquivo:",
+                value="grandes_litigantes_202504.parquet"
+            )
+            if caminho and Path(caminho).exists():
                     if st.button("📂 Carregar"):
-                        df = carregar_dados_grandes(caminho)
-                elif caminho:
+                df = carregar_dados_grandes(caminho)
+            elif caminho:
                     st.error("Arquivo não encontrado")
             
     else:  # Dados simulados (🎭 Dados simulados)
